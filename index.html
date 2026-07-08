@@ -1,16 +1,4 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PWA Install Prompt</title>
-    <script async src="https://cdn.jsdelivr.net/gh/ryxxn/pwa-install-prompt@main/index.js"></script>
-</head>
-<body>
-    <h1>Welcome to My PWA</h1>
-</body>
-</html>
-<!DOCTYPE html>
 <html lang="ms">
 <head>
 <meta charset="UTF-8">
@@ -979,17 +967,64 @@ function initInstallPrompt(){
   if(isStandalone())return; // already installed, no need to show button
   installTab=isIOS()?'ios':'android';
   btn.style.display='inline-flex';
-  window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredInstallPrompt=e;});
+ window.addEventListener('beforeinstallprompt',(e)=>{
+
+    e.preventDefault();
+
+    deferredInstallPrompt=e;
+
+    // Auto show native Chrome install dialog
+    setTimeout(()=>{
+
+        if(!isStandalone() && deferredInstallPrompt){
+
+            handleInstallClick();
+
+        }
+
+    },1000);
+
+});
   window.addEventListener('appinstalled',()=>{btn.style.display='none';deferredInstallPrompt=null;closeInstallModal();showToast('HealthLog Pro dipasang ✓');});
-}
+// Auto show iPhone install guide
+
+if(
+    isIOS() &&
+    !isStandalone() &&
+    !localStorage.getItem("iosInstallShown")
+){
+
+    setTimeout(()=>{
+
+        document.getElementById("install-modal").style.display="flex";
+
+        renderInstallModal();
+
+        localStorage.setItem("iosInstallShown","1");
+
+    },1500);
+
+}}
 function handleInstallClick(){
-  if(deferredInstallPrompt&&!isIOS()){
-    deferredInstallPrompt.prompt();
-    deferredInstallPrompt.userChoice.finally(()=>{deferredInstallPrompt=null;});
-    return;
-  }
-  document.getElementById('install-modal').style.display='flex';
-  renderInstallModal();
+
+    if(deferredInstallPrompt && !isIOS()){
+
+        deferredInstallPrompt.prompt();
+
+        deferredInstallPrompt.userChoice.then(()=>{
+
+            deferredInstallPrompt=null;
+
+        });
+
+        return;
+
+    }
+
+    document.getElementById("install-modal").style.display="flex";
+
+    renderInstallModal();
+
 }
 function setInstallTab(t){installTab=t;renderInstallModal();}
 function stepsHtml(steps){return steps.map((t,i)=>`<div class="step-row"><div class="step-num" style="background:var(--green)">${i+1}</div><div class="step-txt">${t}</div></div>`).join('');}
