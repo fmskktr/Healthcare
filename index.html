@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no, email=no, address=no">
+<meta name="theme-color" content="#0F6E56">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>HealthLog Pro</title>
+<style>
+:root{
+  --green:#1A8F68;--dgreen:#0A5C48;--purple:#4338A8;
+  --amber:#9A6010;--red:#8B2020;--blue:#144F8E;
+  --okBg:#D4EDDA;--okText:#1A4D1A;
+  --danBg:#F8D7DA;--danText:#6B1212;
+  --lowBg:#CCE5FF;--lowText:#0A3860;
+  --purBg:#E2E0FC;--purText:#2D2880;
+  --bg:#EAECEF;--card:#fff;--border:#C8CDD5;
+  --txt:#0D1117;--txt2:#4A5568;--txt3:#718096;
+  --ai:#0A5C48;--aiBg:#D4EDDA;--aiDark:#073D30;
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+  /* Elderly-friendly base sizes */
+  --fxs:13px;--fsm:15px;--fmd:17px;--flg:20px;--fxl:24px;--f2xl:32px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;height:100%;overflow:hidden;}
+body{
+  font-family:'Roboto',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);color:var(--txt);
+  display:flex;flex-direction:column;
+  -webkit-font-smoothing:antialiased;
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  width:100%;max-width:430px;
+  margin:0 auto;overflow:hidden;
+  font-size:var(--fmd);
+}
+.screen{display:none;flex-direction:column;position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden;}
+.screen.active{display:flex;}
+
+/* NAV */
+.nav{padding:14px 18px 16px;flex-shrink:0;}
+.nav-sub{font-size:var(--fxs);color:rgba(255,255,255,.75);font-weight:700;letter-spacing:.1em;margin-bottom:4px;}
+.nav h2{font-size:var(--fxl);font-weight:800;color:#fff;line-height:1.2;}
+.nav p{font-size:var(--fsm);color:rgba(255,255,255,.9);margin-top:4px;}
+.nav-row{display:flex;justify-content:space-between;align-items:flex-end;}
+
+/* BODY */
+.body{
+  padding:14px;background:var(--bg);
+  flex:1;min-height:0;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  padding-bottom:calc(90px + var(--safe-bottom));
+}
+
+/* TABBAR — 7 tabs, compact but legible */
+.tabbar{display:flex;background:var(--card);border-top:2px solid var(--border);flex-shrink:0;padding-bottom:var(--safe-bottom);}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;padding:7px 1px 5px;font-size:9px;color:var(--txt2);gap:2px;cursor:pointer;border:none;background:none;font-weight:600;font-family:inherit;line-height:1.2;}
+.tab.active{color:var(--green);font-weight:800;}
+.tab-icon{font-size:20px;line-height:1;}
+
+/* CARDS */
+.card{background:var(--card);border-radius:16px;border:1.5px solid var(--border);padding:16px 18px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.sec-hdr{font-size:var(--fxs);font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--green);margin-bottom:12px;}
+
+/* BADGES */
+.badge{display:inline-block;font-size:var(--fsm);padding:5px 14px;border-radius:20px;font-weight:800;white-space:nowrap;}
+.badge-ok{background:var(--okBg);color:var(--okText);}
+.badge-low{background:var(--lowBg);color:var(--lowText);}
+.badge-hi{background:var(--danBg);color:var(--danText);}
+.badge-warn{background:#FFF3CD;color:#7A5200;}
+
+/* GRIDS */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.stat-box{background:var(--bg);border-radius:14px;padding:14px 8px;text-align:center;border:1px solid var(--border);}
+.stat-val{font-size:var(--fxl);font-weight:800;}
+.stat-lbl{font-size:var(--fxs);color:var(--txt2);margin-top:4px;line-height:1.4;font-weight:600;}
+
+/* BUTTONS */
+.btn-row{display:flex;gap:10px;margin-bottom:14px;}
+.btn{border:none;border-radius:12px;padding:14px 8px;font-size:var(--fsm);font-weight:700;cursor:pointer;text-align:center;flex:1;font-family:inherit;line-height:1.3;}
+.btn:active{opacity:.7;}
+.btn-outline{background:var(--card);border:2px solid var(--border);color:var(--txt2);}
+.btn-outline.sel{border-color:var(--green);background:var(--green);color:#fff;}
+.btn-green{background:var(--green);color:#fff;}
+.btn-red{background:#FFF0F0;color:var(--red);border:2px solid var(--red);}
+.btn-ghost{background:rgba(255,255,255,.25);color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:var(--fsm);cursor:pointer;font-family:inherit;font-weight:700;}
+
+/* INPUTS */
+.inp-wrap{margin-bottom:16px;}
+.inp-lbl{font-size:var(--fsm);color:var(--txt);font-weight:700;display:flex;justify-content:space-between;margin-bottom:8px;}
+.inp-unit{color:var(--green);font-weight:800;}
+.inp{width:100%;border:2px solid var(--border);border-radius:14px;padding:16px 16px;font-size:var(--fxl);font-weight:700;background:var(--card);color:var(--txt);outline:none;font-family:inherit;-webkit-appearance:none;appearance:none;}
+.inp:focus{border-color:var(--green);box-shadow:0 0 0 4px rgba(26,143,104,.15);}
+.inp-hint{font-size:var(--fsm);color:var(--green);font-weight:700;margin-top:6px;}
+.inp-err{font-size:var(--fsm);color:var(--red);font-weight:700;margin-top:6px;display:none;}
+
+/* TIMING BUTTONS */
+.timing-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.timing-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
+.timing-btn{border:2px solid var(--border);border-radius:12px;padding:14px 6px;font-size:var(--fsm);font-weight:700;cursor:pointer;text-align:center;background:var(--card);color:var(--txt2);line-height:1.4;font-family:inherit;}
+.timing-btn.sel{border-color:var(--green);background:var(--green);color:#fff;}
+
+/* ADVICE BOXES */
+.adv-box{border-radius:16px;padding:16px 18px;margin-bottom:14px;border:2px solid;}
+.step-row{display:flex;gap:14px;margin-bottom:14px;align-items:flex-start;}
+.step-num{min-width:30px;height:30px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:var(--fsm);font-weight:800;flex-shrink:0;margin-top:2px;}
+.step-txt{font-size:var(--fsm);line-height:1.7;color:var(--txt);font-weight:500;}
+.mon-row{display:flex;gap:12px;font-size:var(--fsm);color:var(--txt2);margin-bottom:10px;align-items:flex-start;line-height:1.6;font-weight:500;}
+.mon-arr{color:var(--green);font-size:22px;flex-shrink:0;line-height:1;}
+.stop-box{background:#FFF0F0;border:2px solid var(--red);border-radius:14px;padding:14px 16px;margin-bottom:14px;}
+.tit-box{background:var(--purBg);border:2px solid var(--purple);border-radius:14px;padding:14px 16px;margin-bottom:14px;}
+.pulse-box{border-radius:14px;padding:14px 16px;margin-bottom:14px;border:2px solid;}
+
+/* HISTORY */
+.hist-row{display:flex;align-items:center;padding:14px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.hist-row:last-child{border-bottom:none;}
+.hist-row:active{background:var(--bg);margin:0 -4px;padding:14px 4px;border-radius:10px;}
+.hist-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;margin-right:14px;}
+
+/* TIR */
+.tir-bar{height:8px;border-radius:4px;margin-top:6px;overflow:hidden;}
+.tir-fill{height:100%;border-radius:4px;}
+
+/* CALENDAR */
+.month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.month-day-hdr{text-align:center;font-size:11px;font-weight:800;color:var(--txt2);padding:6px 0;}
+.month-day{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:2px 0;}
+.month-pill{width:100%;min-width:0;aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;box-sizing:border-box;border:2px solid transparent;}
+.month-pill:active{opacity:.7;}
+.month-dots{display:flex;gap:2px;justify-content:center;min-height:6px;}
+.cal-dot{width:5px;height:5px;border-radius:50%;}
+.pill-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;}
+.legend-dot{width:12px;height:12px;border-radius:4px;flex-shrink:0;}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:var(--fsm);color:var(--txt2);font-weight:600;}
+
+/* CHARTS */
+.bar-chart{display:flex;align-items:flex-end;gap:4px;height:52px;}
+.bar{border-radius:4px;min-height:4px;}
+.bar-lbl{display:flex;justify-content:space-between;margin-top:5px;font-size:var(--fxs);color:var(--txt2);font-weight:600;}
+.week-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.week-btn{background:none;border:2px solid var(--border);border-radius:10px;padding:10px 20px;cursor:pointer;font-size:22px;font-family:inherit;color:var(--txt);}
+.range-btn{border:2px solid var(--border);border-radius:12px;padding:12px 8px;font-size:var(--fsm);font-weight:700;cursor:pointer;background:var(--card);color:var(--txt2);font-family:inherit;flex:1;}
+.range-btn.sel{border-color:var(--purple);background:var(--purple);color:#fff;}
+.insr-btn{border:2px solid var(--border);border-radius:12px;padding:11px 4px;font-size:var(--fsm);font-weight:700;cursor:pointer;background:var(--card);color:var(--txt2);flex:1;text-align:center;font-family:inherit;}
+.insr-btn.sel{border-color:var(--purple);background:var(--purple);color:#fff;}
+
+/* SAVE BUTTON */
+.save-btn{background:var(--green);color:#fff;border:none;border-radius:16px;padding:18px 0;width:100%;font-size:var(--flg);font-weight:800;cursor:pointer;margin-top:8px;font-family:inherit;letter-spacing:.01em;}
+.save-btn:active{opacity:.8;}
+
+/* OTHER BUTTONS */
+.edtab-btn{border:2px solid var(--border);border-radius:12px;padding:12px 4px;font-size:var(--fsm);font-weight:700;cursor:pointer;background:var(--card);color:var(--txt2);flex:1;text-align:center;font-family:inherit;}
+.edtab-btn.sel{border-color:#0A5C48;background:#0A5C48;color:#fff;}
+
+/* LIFESTYLE */
+.tip-card{background:var(--card);border-radius:16px;border:1.5px solid var(--border);padding:16px 18px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.tip-icon{font-size:30px;margin-bottom:10px;}
+.tip-title{font-size:var(--fmd);font-weight:800;color:var(--txt);margin-bottom:8px;}
+.tip-body{font-size:var(--fsm);color:var(--txt2);line-height:1.8;}
+.tip-tag{display:inline-block;font-size:var(--fxs);padding:4px 10px;border-radius:20px;font-weight:800;margin-bottom:10px;}
+
+/* MISC */
+.exit-btn{background:#FFF0F0;color:var(--red);border:2px solid var(--red);border-radius:14px;padding:16px 0;width:100%;font-size:var(--fmd);font-weight:800;cursor:pointer;margin-top:6px;font-family:inherit;}
+.detail-back{background:rgba(255,255,255,.25);border:none;border-radius:10px;padding:9px 16px;color:#fff;font-size:var(--fmd);cursor:pointer;margin-bottom:12px;font-family:inherit;display:inline-block;font-weight:700;}
+.confirm-box{background:#FFF0F0;border:2px solid var(--red);border-radius:16px;padding:16px 18px;margin-bottom:14px;}
+.empty-state{text-align:center;padding:52px 20px;}
+.empty-ico{font-size:56px;margin-bottom:14px;}
+.target-row{display:flex;justify-content:space-between;align-items:center;font-size:var(--fsm);padding:12px 0;border-bottom:1px solid var(--border);font-weight:500;}
+.target-row:last-child{border-bottom:none;}
+.target-row strong{font-size:var(--fmd);font-weight:800;}
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(13,17,23,.92);color:#fff;padding:12px 24px;border-radius:24px;font-size:var(--fmd);font-weight:700;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;max-width:320px;text-align:center;}
+.toast.show{opacity:1;}
+
+/* TABLES */
+table{width:100%;border-collapse:collapse;font-size:var(--fsm);}
+th{font-size:var(--fxs);color:var(--txt2);font-weight:800;padding:6px 8px 10px;text-align:left;border-bottom:2px solid var(--border);text-transform:uppercase;letter-spacing:.04em;}
+td{padding:12px 8px;border-bottom:1px solid var(--border);font-size:var(--fsm);font-weight:500;}
+tr:last-child td{border-bottom:none;}
+
+/* ── AI TAB ── */
+.ai-nav{background:linear-gradient(135deg,var(--aiDark),var(--ai));padding:14px 18px 16px;flex-shrink:0;}
+.ai-chat-wrap{display:flex;flex-direction:column;flex:1;min-height:0;}
+.ai-messages{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 14px 10px;}
+.ai-input-bar{display:flex;gap:10px;padding:12px 14px;background:var(--card);border-top:2px solid var(--border);flex-shrink:0;padding-bottom:calc(12px + var(--safe-bottom));}
+.ai-inp{flex:1;border:2px solid var(--border);border-radius:24px;padding:13px 18px;font-size:var(--fmd);background:var(--bg);color:var(--txt);outline:none;font-family:inherit;font-weight:500;}
+.ai-inp:focus{border-color:var(--ai);}
+.ai-send{background:var(--ai);border:none;border-radius:50%;width:50px;height:50px;color:#fff;font-size:22px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.ai-send:active{opacity:.7;}
+.msg-row{display:flex;margin-bottom:14px;gap:10px;align-items:flex-end;}
+.msg-row.user{flex-direction:row-reverse;}
+.msg-bubble{max-width:84%;padding:13px 16px;border-radius:20px;font-size:var(--fmd);line-height:1.7;}
+.msg-bubble.bot{background:var(--card);color:var(--txt);border:1.5px solid var(--border);border-bottom-left-radius:5px;}
+.msg-bubble.user{background:var(--ai);color:#fff;border-bottom-right-radius:5px;}
+.msg-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.msg-avatar.bot{background:var(--aiBg);border:2px solid var(--ai);}
+.msg-avatar.user{background:var(--border);}
+.ai-chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;padding:0 14px;}
+.ai-chip{border:2px solid var(--ai);border-radius:22px;padding:9px 14px;font-size:var(--fsm);font-weight:700;cursor:pointer;background:var(--aiBg);color:var(--ai);font-family:inherit;white-space:nowrap;}
+.ai-chip:active{background:var(--ai);color:#fff;}
+.ai-tab-btn{border:2px solid var(--border);border-radius:12px;padding:11px 4px;font-size:var(--fsm);font-weight:700;cursor:pointer;background:var(--card);color:var(--txt2);flex:1;text-align:center;font-family:inherit;}
+.ai-tab-btn.sel{border-color:var(--ai);background:var(--ai);color:#fff;}
+.insight-card{border-radius:14px;padding:14px 16px;margin-bottom:12px;border:2px solid;}
+.risk-ring{display:flex;justify-content:center;align-items:center;margin:10px 0 18px;}
+.typing-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--txt3);margin:0 3px;animation:blink 1.2s infinite;}
+.typing-dot:nth-child(2){animation-delay:.2s;}
+.typing-dot:nth-child(3){animation-delay:.4s;}
+@keyframes blink{0%,80%,100%{opacity:.2;}40%{opacity:1;}}
+
+button,.tab,.tabbar,.nav,.timing-btn,.edtab-btn,.range-btn,.insr-btn,.badge,.tip-tag,.ai-chip,.ai-tab-btn{-webkit-user-select:none;user-select:none;}
+.tip-body,.step-txt,.adv-box p,.card p,.msg-bubble{-webkit-user-select:text;user-select:text;}
+button,a{-webkit-touch-callout:none;}
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<!-- HOME -->
+<div id="s-home" class="screen active">
+  <div class="nav" style="background:var(--dgreen)">
+    <div class="nav-sub">HEALTHLOG PRO</div>
+    <div class="nav-row">
+      <div><h2>Selamat Datang</h2><p id="home-date"></p></div>
+      <button class="btn-ghost" id="install-btn" style="display:none" onclick="handleInstallClick()">⬇️ Install App</button>
+    </div>
+  </div>
+  <div class="body">
+    <div id="home-log-nav"></div>
+    <div class="card" style="background:var(--purBg);border:2px solid var(--purple)">
+      <div class="sec-hdr" style="color:var(--purText)">Jenis Rawatan</div>
+      <p style="font-size:var(--fsm);color:var(--purText);line-height:1.6;font-weight:600;margin-bottom:10px">⚠️ Sila pilih jenis rawatan diabetes anda dahulu supaya nasihat yang diberikan tepat mengikut rawatan anda.</p>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="insr-btn" id="insr-oral" onclick="setInsrType('oral')">💊 Oral</button>
+        <button class="insr-btn" id="insr-premix" onclick="setInsrType('premix')">💉 Premix</button>
+        <button class="insr-btn" id="insr-bb" onclick="setInsrType('basal-bolus')">💉 Rapid+Basal</button>
+      </div>
+      <p id="insr-desc" style="font-size:var(--fsm);color:var(--purText);line-height:1.6;font-weight:500"></p>
+    </div>
+    <div id="home-log-body"></div>
+    <div class="grid3" id="home-stats" style="margin-bottom:14px"></div>
+    <div id="home-glucose"></div>
+    <div id="home-bp"></div>
+    <div id="home-tir"></div>
+    <button class="exit-btn" onclick="exitApp()">⏻ Simpan &amp; Keluar</button>
+  </div>
+  <div class="tabbar" id="tabbar-home"></div>
+</div>
+
+<!-- HISTORY -->
+<div id="s-history" class="screen">
+  <div class="nav" style="background:var(--dgreen)" id="hist-nav">
+    <div class="nav-sub">HEALTHLOG PRO</div>
+    <div class="nav-row">
+      <div><h2>Sejarah Bacaan</h2><p id="hist-count"></p></div>
+      <button class="btn-ghost" onclick="showClearConfirm()">🗑️ Padam</button>
+    </div>
+  </div>
+  <div class="body">
+    <div class="btn-row" id="hist-filter-row"></div>
+    <div id="hist-confirm" style="display:none"></div>
+    <div id="hist-list"></div>
+  </div>
+  <div class="tabbar" id="tabbar-history"></div>
+</div>
+
+<!-- STATS -->
+<div id="s-stats" class="screen">
+  <div class="nav" style="background:#4338A8">
+    <div class="nav-sub">HEALTHLOG PRO</div>
+    <h2>Statistik</h2><p>Analisis bacaan anda</p>
+  </div>
+  <div class="body">
+    <div class="btn-row" id="stats-range-row"></div>
+    <div id="stats-content"></div>
+  </div>
+  <div class="tabbar" id="tabbar-stats"></div>
+</div>
+
+<!-- CALENDAR -->
+<div id="s-dashboard" class="screen">
+  <div class="nav" style="background:var(--dgreen)">
+    <div class="nav-sub">HEALTHLOG PRO</div>
+    <h2>Kalendar</h2><p>Ketik tarikh untuk lihat bacaan</p>
+  </div>
+  <div class="body">
+    <div class="btn-row" id="cal-tab-row"></div>
+    <div class="card">
+      <div class="week-nav">
+        <button class="week-btn" onclick="calPrev()">&#8249;</button>
+        <div style="text-align:center">
+          <div id="cal-month-label" style="font-size:var(--fmd);font-weight:800;color:var(--txt)"></div>
+        </div>
+        <button class="week-btn" onclick="calNext()">&#8250;</button>
+      </div>
+      <div class="month-grid" id="cal-day-headers"></div>
+      <div class="month-grid" id="cal-grid" style="margin-top:5px"></div>
+      <div class="pill-row">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Normal</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Tinggi</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Rendah</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--border)"></div>Tiada data</div>
+      </div>
+    </div>
+    <div class="card" id="cal-day-card">
+      <p style="font-size:var(--fmd);color:var(--txt2);text-align:center;padding:20px 0">Ketik tarikh untuk lihat bacaan</p>
+    </div>
+  </div>
+  <div class="tabbar" id="tabbar-dashboard"></div>
+</div>
+
+<!-- LIFESTYLE -->
+<div id="s-lifestyle" class="screen">
+  <div class="nav" style="background:#0A5C48">
+    <div class="nav-sub">HEALTHLOG PRO</div>
+    <h2>Senaman &amp; Diet</h2><p>Panduan gaya hidup sihat</p>
+  </div>
+  <div class="body">
+    <div class="btn-row" id="lifestyle-tabs"></div>
+    <div id="lifestyle-content"></div>
+  </div>
+  <div class="tabbar" id="tabbar-lifestyle"></div>
+</div>
+
+<!-- AI TAB -->
+<div id="s-ai" class="screen">
+  <div class="ai-nav">
+    <div class="nav-sub">HEALTHLOG PRO</div>
+    <div class="nav-row">
+      <div><h2 style="color:#fff;font-size:var(--fxl);font-weight:800">🤖 Pembantu AI</h2><p style="color:rgba(255,255,255,.85);font-size:var(--fsm)">Analisis data anda • 100% Luar Talian</p></div>
+      <button class="btn-ghost" onclick="clearAiChat()">🔄 Reset</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;padding:12px 14px 6px;background:var(--bg);flex-shrink:0;" id="ai-subtab-row"></div>
+  <div id="ai-chat-view" class="ai-chat-wrap">
+    <div id="ai-messages" class="ai-messages"></div>
+    <div id="ai-chips" class="ai-chip-row"></div>
+    <div class="ai-input-bar">
+      <input class="ai-inp" id="ai-inp" type="text" placeholder="Tanya sesuatu..." autocomplete="off" autocorrect="off" autocapitalize="sentences" onkeydown="if(event.key==='Enter')sendAiMsg()">
+      <button class="ai-send" onclick="sendAiMsg()">➤</button>
+    </div>
+  </div>
+  <div id="ai-insights-view" style="display:none;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;padding-bottom:calc(90px + var(--safe-bottom));"></div>
+  <div id="ai-summary-view" style="display:none;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;padding-bottom:calc(90px + var(--safe-bottom));"></div>
+  <div class="tabbar" id="tabbar-ai"></div>
+</div>
+
+<!-- INSTALL APP MODAL (full instructions for Android & iOS) -->
+<div id="install-modal" style="display:none;position:fixed;inset:0;background:rgba(13,17,23,.6);z-index:998;align-items:center;justify-content:center;padding:20px;">
+  <div class="card" style="max-width:380px;width:100%;margin:0;box-shadow:0 8px 30px rgba(0,0,0,.35);max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+      <div class="sec-hdr" style="margin-bottom:0">📲 Pasang HealthLog Pro</div>
+      <button class="btn-ghost" style="background:var(--bg);color:var(--txt2);padding:4px 10px" onclick="closeInstallModal()">✕</button>
+    </div>
+    <p style="font-size:var(--fsm);color:var(--txt2);line-height:1.6;margin-bottom:12px">Pasang aplikasi ini pada skrin utama telefon anda untuk akses pantas — sama seperti aplikasi biasa.</p>
+    <div style="display:flex;gap:8px;margin-bottom:14px" id="install-tabs"></div>
+    <div id="install-modal-body"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+const STORE_KEY='healthlog_v2';
+let _saveTimer=null;
+function saveToStorage(){clearTimeout(_saveTimer);_saveTimer=setTimeout(_doSave,400);}
+function saveNow(){clearTimeout(_saveTimer);_doSave();}
+function _doSave(){try{localStorage.setItem(STORE_KEY,JSON.stringify({r:readings,it:insulinType,nid:nextId,aiHistory:aiHistory}));}catch(e){try{localStorage.setItem(STORE_KEY,JSON.stringify({r:readings.slice(0,300),it:insulinType,nid:nextId}));}catch(e2){}}}
+function loadFromStorage(){try{const raw=localStorage.getItem(STORE_KEY);if(!raw)return;const d=JSON.parse(raw);if(!d||typeof d!=='object')return;if(Array.isArray(d.r))readings=d.r.filter(r=>r&&typeof r.id==='number'&&typeof r.ts==='number'&&r.ts>0&&(r.type==='glucose'||r.type==='bp'));if(typeof d.it==='string'&&['oral','premix','basal-bolus'].includes(d.it))insulinType=d.it;const maxId=readings.reduce((m,r)=>Math.max(m,r.id),0);nextId=Math.max((typeof d.nid==='number'?d.nid:1),maxId+1);if(Array.isArray(d.aiHistory))aiHistory=d.aiHistory.slice(-40);}catch(e){readings=[];nextId=1;}}
+
+const MONTHS_MY=["Jan","Feb","Mac","Apr","Mei","Jun","Jul","Ogo","Sep","Okt","Nov","Dis"];
+const MONTHS_FULL=["Januari","Februari","Mac","April","Mei","Jun","Julai","Ogos","September","Oktober","November","Disember"];
+const HARI=["Isn","Sel","Rab","Kha","Jum","Sab","Ahd"];
+const TLABELS={"pra-sarapan":"Pra-sarapan (Puasa)","pra-tengahari":"Pra-tengahari","pra-makan-malam":"Pra-makan malam","pra-tidur":"Pra-tidur","2j-selepas-sarapan":"2j selepas sarapan","2j-selepas-tengahari":"2j selepas tengahari","2j-selepas-makan-malam":"2j selepas makan malam"};
+const TORDER=["pra-sarapan","2j-selepas-sarapan","pra-tengahari","2j-selepas-tengahari","pra-makan-malam","2j-selepas-makan-malam","pra-tidur"];
+
+let readings=[],insulinType='oral',nextId=1,currentTab='home',histFilter='semua',calTab='glucose';
+let calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),calSelDate=null,statsRange=7;
+let logType='glucose',logTiming='pra-sarapan',showAdvice=false,lastAdvice=null;
+let detailRecord=null,clearConfirm=false,edTab='exercise';
+let aiSubTab='chat',aiHistory=[],aiTyping=false;
+
+function clsGlucose(t,val){const v=parseFloat(val);if(isNaN(v))return 'ok';if(v<4.0)return 'rendah';if(t==='pra-sarapan')return v<=7.0?'ok':'tinggi';if(t==='pra-tidur')return(v>=6.0&&v<=8.0)?'ok':(v<6.0?'rendah':'tinggi');return v<=8.5?'ok':'tinggi';}
+function clsBP(s,d){if(s<90||d<60)return 'rendah';if(s<130&&d<80)return 'ok';if(s>=180||d>=120)return 'kritikal';return 'tinggi';}
+function clsPulse(p){const v=parseInt(p);if(!v||isNaN(v)||v<=0)return null;if(v<60)return 'rendah';if(v<=100)return 'ok';return 'tinggi';}
+function glucoseTarget(t){if(t==='pra-sarapan')return '4.0–7.0 mmol/L';if(t==='pra-tidur')return '6.0–8.0 mmol/L';return '4.0–8.5 mmol/L';}
+const clsColorMap={ok:'var(--green)',rendah:'var(--blue)',tinggi:'var(--red)',kritikal:'var(--red)'};
+const fmtTime=t=>new Date(t).toLocaleTimeString('ms-MY',{hour:'2-digit',minute:'2-digit'});
+const fmtDateShort=t=>{const d=new Date(t);return `${d.getDate()} ${MONTHS_MY[d.getMonth()]}`;};
+const fmtDateFull=t=>{const d=new Date(t);return `${HARI[d.getDay()===0?6:d.getDay()-1]}, ${d.getDate()} ${MONTHS_MY[d.getMonth()]} ${d.getFullYear()}`;};
+const sameDay=(a,b)=>new Date(a).toDateString()===new Date(b).toDateString();
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const bold=s=>String(s).replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+function showToast(msg,dur=2800){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+function badgeHtml(cls,label){const bc={ok:'badge-ok',rendah:'badge-low',tinggi:'badge-hi',kritikal:'badge-hi'}[cls]||'badge-ok';const lb=label||{ok:'Normal',rendah:'Rendah',tinggi:'Tinggi',kritikal:'Kritikal'}[cls]||'Normal';return `<span class="badge ${bc}">${lb}</span>`;}
+function getDayG(date){return readings.filter(r=>r.type==='glucose'&&sameDay(r.ts,date instanceof Date?date.getTime():date));}
+function getDayBP(date){return readings.filter(r=>r.type==='bp'&&sameDay(r.ts,date instanceof Date?date.getTime():date));}
+function pillCls(date){const gr=getDayG(date);if(!gr.length)return 'kosong';const cs=gr.map(r=>clsGlucose(r.timing,r.value));if(cs.includes('rendah'))return 'rendah';if(cs.includes('tinggi'))return 'tinggi';return 'ok';}
+function getDaysInMonth(y,m){return new Date(y,m+1,0).getDate();}
+function getFirstDayOfMonth(y,m){const d=new Date(y,m,1).getDay();return d===0?6:d-1;}
+function sparkBars(vals,maxVal,getColor){if(!vals.length)return '';return `<div class="bar-chart">${vals.map((v,i)=>{const h=Math.max(4,Math.round((v/maxVal)*52));const isLast=i===vals.length-1;return `<div class="bar" style="flex:1;height:${h}px;background:${getColor(v,i,isLast)};${isLast?'':'opacity:.5'}"></div>`;}).join('')}</div>`;}
+
+// ══════════════════════════════════════════════════════
+// ── MEDIUM AI FEATURES ────────────────────────────────
+// ══════════════════════════════════════════════════════
+
+// 1. LINEAR REGRESSION FORECASTING (~1KB math)
+function linearRegression(vals){
+  const n=vals.length;if(n<3)return null;
+  const xs=vals.map((_,i)=>i);
+  const mx=xs.reduce((a,b)=>a+b,0)/n;
+  const my=vals.reduce((a,b)=>a+b,0)/n;
+  const num=xs.reduce((s,x,i)=>s+(x-mx)*(vals[i]-my),0);
+  const den=xs.reduce((s,x)=>s+(x-mx)**2,0);
+  if(!den)return null;
+  const slope=num/den;
+  const intercept=my-slope*mx;
+  return{slope,intercept,predict:steps=>+(intercept+slope*(n-1+steps)).toFixed(1)};
+}
+function forecastFasting(){
+  const fasting=readings.filter(r=>r.type==='glucose'&&r.timing==='pra-sarapan').sort((a,b)=>a.ts-b.ts).slice(-10).map(r=>r.value);
+  if(fasting.length<3)return null;
+  const reg=linearRegression(fasting);if(!reg)return null;
+  const next=reg.predict(1);
+  const trend=reg.slope>0.15?'📈 meningkat':reg.slope<-0.15?'📉 menurun':'➡️ stabil';
+  const cls=clsGlucose('pra-sarapan',next);
+  return{value:next,trend,slope:reg.slope,cls,color:clsColorMap[cls]||'var(--green)',history:fasting};
+}
+function forecastPostMeal(timing){
+  const data=readings.filter(r=>r.type==='glucose'&&r.timing===timing).sort((a,b)=>a.ts-b.ts).slice(-7).map(r=>r.value);
+  if(data.length<3)return null;
+  const reg=linearRegression(data);if(!reg)return null;
+  return{value:reg.predict(1),cls:clsGlucose(timing,reg.predict(1))};
+}
+
+// 2. FUZZY SYMPTOM MATCHER
+const SYMPTOM_MAP=[
+  {keys:['pening','pusing','loya','lemah','berpeluh','menggigil','tangan menggeletar','menggeletar','lapar tiba','lapar tiba-tiba','gelap mata','pengsan','tidak larat'],condition:'hypoglycemia',title:'Kemungkinan Hipoglisemia (Gula Rendah)',color:'var(--blue)',bg:'var(--lowBg)',icon:'🔵',urgency:'segera',actions:['Semak gula darah **segera** jika boleh.','Makan **15g gula pantas** — 3 tablet glukosa / ½ tin minuman bergas / 1 sudu gula dalam air.','Duduk dan rehat. Tunggu 15 minit, semak semula.','Jika gula < 4.0 mmol/L atau simptom tidak hilang — hubungi keluarga atau pergi A&E.'],note:'Simptom ini biasa berlaku semasa perut kosong, selepas senaman, atau jika dos insulin/ubat terlalu tinggi.'},
+  {keys:['sakit kepala','kepala berdenyut','penglihatan kabur','muka merah','leher tegang','sesak','dada berat','jantung laju','degupan laju'],condition:'hypertension',title:'Kemungkinan Tekanan Darah Tinggi',color:'var(--red)',bg:'var(--danBg)',icon:'🔴',urgency:'segera',actions:['Semak **tekanan darah** anda sekarang.','Duduk tenang **5–10 minit**. Jangan bergerak atau bercakap.','Ambil ubat tekanan darah jika belum diambil hari ini.','Elakkan kafein dan aktiviti berat.'],note:'Jika TD ≥180/120 atau ada sakit dada + sesak nafas — pergi A&E segera.'},
+  {keys:['dahaga','kerap kencing','kencing banyak','mulut kering','penglihatan kabur','badan lesu','keletihan','mengantuk','tidak bermaya'],condition:'hyperglycemia',title:'Kemungkinan Gula Darah Tinggi',color:'var(--red)',bg:'var(--danBg)',icon:'🔴',urgency:'hari ini',actions:['Semak **gula darah** anda sekarang.','Minum **segelas air kosong** (250ml).','Elakkan makanan atau minuman manis.','Jika gula > 14.0 mmol/L — hubungi klinik atau pergi A&E.'],note:'Simptom ini boleh berlaku jika dos ubat tidak mencukupi, makan berlebihan, atau sedang sakit/stres.'},
+  {keys:['sakit dada','dada sakit','sakit ulu hati','lengan kebas','tangan kebas','peluh sejuk','muka pucat','nafas pendek','sesak nafas'],condition:'cardiac',title:'⚠️ Tanda Amaran Jantung / Kecemasan',color:'var(--red)',bg:'var(--danBg)',icon:'🚨',urgency:'KECEMASAN',actions:['**PERGI A&E SEGERA** atau hubungi 999.','Jangan memandu sendiri.','Beritahu orang berdekatan anda.','Jika ada aspirin — kunyah 300mg (jika doktor benarkan).'],note:'Jangan abaikan simptom ini. Lebih baik pergi dan didapati tiada apa-apa daripada lambat mendapat rawatan.'},
+  {keys:['kaki bengkak','kaki sakit','luka tidak sembuh','kebas kaki','kesemutan','gatal','kulit kering','mata kabur'],condition:'complications',title:'Kemungkinan Komplikasi Diabetes',color:'var(--amber)',bg:'#FFF8EC',icon:'⚠️',urgency:'dalam seminggu',actions:['Rekod simptom ini dan tunjukkan kepada doktor pada kunjungan seterusnya.','Periksa kaki anda setiap hari untuk luka atau kemerahan.','Pastikan gula darah dalam kawalan yang baik.','Jangan tangguh jika ada luka yang tidak sembuh — pergi klinik.'],note:'Simptom ini mungkin berkaitan dengan neuropati atau komplikasi diabetik yang perlu penilaian doktor.'},
+];
+function matchSymptoms(text){
+  const q=text.toLowerCase();
+  const scores=SYMPTOM_MAP.map(s=>({...s,score:s.keys.filter(k=>q.includes(k)).length}));
+  const best=scores.filter(s=>s.score>0).sort((a,b)=>b.score-a.score);
+  return best.length?best[0]:null;
+}
+
+// 3. MEAL IMPACT SCORING
+function buildMealImpactTable(){
+  const FOOD_KEYWORDS={
+    'nasi':['nasi','nasik','rice'],'roti':['roti','bread','toast'],'mee':['mee','bihun','kuay teow','pasta','maggi'],
+    'gula':['gula','manis','sweet','kek','kuih','biskut','coklat','candy'],'minuman manis':['teh tarik','milo','nescafe','sirap','air manis','jus'],
+    'sayur':['sayur','salad','ulam','kobis','bayam','kangkung'],'buah':['buah','pisang','epal','betik','tembikai','mangga'],
+    'ikan':['ikan','fish','sardin','tuna','salmon'],'ayam':['ayam','chicken'],'daging':['daging','beef','kambing'],
+    'goreng':['goreng','fried','deep fry'],'kukus':['kukus','steam','bakar','grill'],
+  };
+  const impacts={};
+  readings.filter(r=>r.type==='glucose'&&r.note&&r.note.length>2).forEach(r=>{
+    const note=r.note.toLowerCase();
+    Object.entries(FOOD_KEYWORDS).forEach(([food,keys])=>{
+      if(keys.some(k=>note.includes(k))){
+        if(!impacts[food])impacts[food]={food,readings:[],total:0,count:0};
+        impacts[food].readings.push(r.value);
+        impacts[food].total+=r.value;
+        impacts[food].count++;
+      }
+    });
+  });
+  return Object.values(impacts).filter(f=>f.count>=2).map(f=>({
+    food:f.food,avg:(f.total/f.count).toFixed(1),count:f.count,
+    cls:clsGlucose('2j-selepas-sarapan',f.total/f.count),
+    color:clsColorMap[clsGlucose('2j-selepas-sarapan',f.total/f.count)]||'var(--green)',
+  })).sort((a,b)=>b.avg-a.avg);
+}
+
+// ── AI ENGINE ──────────────────────────────────────────────────────
+function aiGetRecent(days=7){const cut=Date.now()-days*86400000;return{g:readings.filter(r=>r.type==='glucose'&&r.ts>cut),b:readings.filter(r=>r.type==='bp'&&r.ts>cut)};}
+function aiAvg(arr){return arr.length?(arr.reduce((a,b)=>a+b,0)/arr.length):null;}
+function aiGlucStats(days=7){const{g}=aiGetRecent(days);if(!g.length)return null;const vals=g.map(r=>r.value);const ok=g.filter(r=>clsGlucose(r.timing,r.value)==='ok').length;const low=g.filter(r=>clsGlucose(r.timing,r.value)==='rendah').length;const high=g.filter(r=>clsGlucose(r.timing,r.value)==='tinggi').length;const avg=aiAvg(vals);const hba1c=avg?((avg+2.59)/1.59).toFixed(1):null;return{count:g.length,avg:avg?avg.toFixed(1):null,max:Math.max(...vals).toFixed(1),min:Math.min(...vals).toFixed(1),okPct:Math.round(ok/g.length*100),lowN:low,highN:high,tir:Math.round(ok/g.length*100),hba1c,raw:g};}
+function aiBPStats(days=7){const{b}=aiGetRecent(days);if(!b.length)return null;const sys=b.map(r=>r.sys),dia=b.map(r=>r.dia);const ok=b.filter(r=>clsBP(r.sys,r.dia)==='ok').length;const high=b.filter(r=>['tinggi','kritikal'].includes(clsBP(r.sys,r.dia))).length;return{count:b.length,avgSys:Math.round(aiAvg(sys)),avgDia:Math.round(aiAvg(dia)),maxSys:Math.max(...sys),highN:high,okPct:Math.round(ok/b.length*100),raw:b};}
+
+function detectPatterns(){
+  const patterns=[];
+  const g7=readings.filter(r=>r.type==='glucose'&&Date.now()-r.ts<7*86400e3);
+  const g30=readings.filter(r=>r.type==='glucose'&&Date.now()-r.ts<30*86400e3);
+  const fastingByDay={};
+  g30.filter(r=>r.timing==='pra-sarapan').forEach(r=>{const k=new Date(r.ts).toDateString();if(!fastingByDay[k])fastingByDay[k]=[];fastingByDay[k].push(r.value);});
+  const fastingDays=Object.entries(fastingByDay).sort((a,b)=>new Date(b[0])-new Date(a[0]));
+  let highFastStreak=0;
+  for(const[,vals]of fastingDays){const avg=aiAvg(vals);if(avg>7.0)highFastStreak++;else break;}
+  if(highFastStreak>=3)patterns.push({type:'streak_high_fasting',sev:'tinggi',icon:'🔴',msg:`Gula puasa melebihi sasaran selama **${highFastStreak} hari berturut-turut**. Pertimbangkan semakan dos insulin basal atau ubat oral anda.`});
+  const hypos7=g7.filter(r=>clsGlucose(r.timing,r.value)==='rendah');
+  if(hypos7.length>=2)patterns.push({type:'frequent_hypo',sev:'kritikal',icon:'🚨',msg:`**${hypos7.length} episod hipoglisemia** dalam 7 hari. Ini memerlukan perhatian segera — hubungi doktor anda.`});
+  const postMeal=g7.filter(r=>r.timing.startsWith('2j-'));
+  const postHigh=postMeal.filter(r=>clsGlucose(r.timing,r.value)==='tinggi');
+  if(postMeal.length>=3&&postHigh.length/postMeal.length>0.5)patterns.push({type:'postmeal_spike',sev:'sederhana',icon:'⚠️',msg:`**${Math.round(postHigh.length/postMeal.length*100)}%** bacaan selepas makan melebihi sasaran. Cuba kurangkan karbohidrat dan berjalan 10 minit selepas makan.`});
+  if(g30.length>=10){const old=g30.slice(Math.floor(g30.length/2)).map(r=>r.value);const recent=g30.slice(0,Math.floor(g30.length/2)).map(r=>r.value);const oldAvg=aiAvg(old),newAvg=aiAvg(recent);if(oldAvg&&newAvg&&oldAvg-newAvg>0.5)patterns.push({type:'improving',sev:'ok',icon:'📈',msg:`Gula darah anda telah **bertambah baik sebanyak ${(oldAvg-newAvg).toFixed(1)} mmol/L** berbanding 2 minggu lalu. Teruskan usaha anda!`});else if(oldAvg&&newAvg&&newAvg-oldAvg>0.5)patterns.push({type:'worsening',sev:'sederhana',icon:'📉',msg:`Gula darah anda **meningkat sebanyak ${(newAvg-oldAvg).toFixed(1)} mmol/L** berbanding 2 minggu lalu.`});}
+  const byTiming={};TORDER.forEach(t=>{const arr=g7.filter(r=>r.timing===t);if(arr.length)byTiming[t]={avg:aiAvg(arr.map(r=>r.value)),ok:arr.filter(r=>clsGlucose(t,r.value)==='ok').length,count:arr.length};});
+  const best=Object.entries(byTiming).filter(([,v])=>v.ok===v.count&&v.count>=2).map(([t])=>t);
+  if(best.length)patterns.push({type:'best_timing',sev:'ok',icon:'✅',msg:`Kawalan terbaik anda pada: **${best.map(t=>TLABELS[t]).join(', ')}**.`});
+  const b7=readings.filter(r=>r.type==='bp'&&Date.now()-r.ts<7*86400e3);
+  if(b7.length>=3){const highBP=b7.filter(r=>['tinggi','kritikal'].includes(clsBP(r.sys,r.dia)));if(highBP.length/b7.length>0.5)patterns.push({type:'bp_high',sev:'tinggi',icon:'🫀',msg:`**${Math.round(highBP.length/b7.length*100)}%** bacaan tekanan darah minggu ini melebihi sasaran (<130/80).`});}
+  if(readings.length>=5){const gap=(Date.now()-readings[0].ts)/86400e3;if(gap>2)patterns.push({type:'logging_gap',sev:'sederhana',icon:'📅',msg:`Bacaan terakhir anda adalah **${Math.round(gap)} hari lalu**. Log lebih kerap untuk analisis yang lebih tepat.`});}
+  return patterns;
+}
+
+function calcRiskScore(){
+  const gs=aiGlucStats(30),bs=aiBPStats(30);if(!gs&&!bs)return null;
+  let score=0,maxScore=0,factors=[];
+  if(gs){maxScore+=40;const tir=gs.tir;if(tir>=70){score+=40;factors.push({label:'TIR Glukosa',val:`${tir}%`,pts:40,max:40,color:'var(--green)'});}else if(tir>=50){score+=25;factors.push({label:'TIR Glukosa',val:`${tir}%`,pts:25,max:40,color:'var(--amber)'});}else{score+=10;factors.push({label:'TIR Glukosa',val:`${tir}%`,pts:10,max:40,color:'var(--red)'});}maxScore+=20;if(gs.lowN===0){score+=20;factors.push({label:'Tiada Hipoglisemia',val:'0 episod',pts:20,max:20,color:'var(--green)'});}else if(gs.lowN<=1){score+=10;factors.push({label:'Hipoglisemia',val:`${gs.lowN}x`,pts:10,max:20,color:'var(--amber)'});}else{factors.push({label:'Hipoglisemia',val:`${gs.lowN}x`,pts:0,max:20,color:'var(--red)'});}if(gs.hba1c){maxScore+=20;const h=parseFloat(gs.hba1c);if(h<7){score+=20;factors.push({label:'HbA1c Anggaran',val:`${gs.hba1c}%`,pts:20,max:20,color:'var(--green)'});}else if(h<8){score+=12;factors.push({label:'HbA1c Anggaran',val:`${gs.hba1c}%`,pts:12,max:20,color:'var(--amber)'});}else{score+=4;factors.push({label:'HbA1c Anggaran',val:`${gs.hba1c}%`,pts:4,max:20,color:'var(--red)'}); }}}
+  if(bs){maxScore+=20;if(bs.okPct>=70){score+=20;factors.push({label:'Kawalan TD',val:`${bs.okPct}%`,pts:20,max:20,color:'var(--green)'});}else if(bs.okPct>=40){score+=10;factors.push({label:'Kawalan TD',val:`${bs.okPct}%`,pts:10,max:20,color:'var(--amber)'});}else{factors.push({label:'Kawalan TD',val:`${bs.okPct}%`,pts:0,max:20,color:'var(--red)'}); }}
+  const pct=maxScore?Math.round(score/maxScore*100):0;
+  const grade=pct>=80?{label:'Sangat Baik',color:'var(--green)',emoji:'🌟'}:pct>=60?{label:'Sederhana Baik',color:'var(--amber)',emoji:'👍'}:pct>=40?{label:'Perlu Perhatian',color:'var(--amber)',emoji:'⚠️'}:{label:'Perlu Tindakan',color:'var(--red)',emoji:'🚨'};
+  return{score:pct,grade,factors};
+}
+
+function generateWeeklySummary(){
+  const gs=aiGlucStats(7),bs=aiBPStats(7);const patterns=detectPatterns();
+  const weekStr=`${fmtDateShort(Date.now()-6*86400e3)} – ${fmtDateShort(Date.now())}`;
+  if(!gs&&!bs)return`<div class="card"><p style="font-size:var(--fmd);color:var(--txt2);text-align:center;padding:24px 0">Tiada data untuk minggu ini. Mula log bacaan anda!</p></div>`;
+  let html=`<div class="card" style="background:linear-gradient(135deg,var(--aiDark),var(--ai));border:none"><div style="font-size:var(--fxs);color:rgba(255,255,255,.7);font-weight:800;letter-spacing:.1em;margin-bottom:6px">LAPORAN MINGGUAN AI</div><div style="font-size:var(--fmd);font-weight:800;color:#fff;margin-bottom:4px">Ringkasan ${weekStr}</div><div style="font-size:var(--fsm);color:rgba(255,255,255,.85)">Dijana daripada ${(gs?.count||0)+(bs?.count||0)} bacaan</div></div>`;
+  let paras=[];
+  if(gs){const tirGrade=gs.tir>=70?'sangat baik':gs.tir>=50?'sederhana':'memerlukan peningkatan';const hypoNote=gs.lowN>0?` Terdapat **${gs.lowN} episod hipoglisemia**.`:'';paras.push(`Gula darah purata anda minggu ini ialah **${gs.avg} mmol/L** dengan anggaran HbA1c **${gs.hba1c}%**. Masa dalam julat (TIR): **${gs.tir}%** — ${tirGrade}.${hypoNote}`);if(gs.highN>0)paras.push(`Terdapat **${gs.highN} bacaan tinggi** minggu ini. ${gs.highN>=3?'Ini adalah corak berulang — bincangkan dengan doktor anda.':'Cuba kenal pasti punca bacaan tinggi ini.'}`);}
+  if(bs){const bpGrade=bs.okPct>=70?'terkawal dengan baik':'memerlukan perhatian lebih';paras.push(`Tekanan darah anda ${bpGrade}. Purata sistolik **${bs.avgSys} mmHg** dengan **${bs.okPct}%** bacaan dalam julat sasaran.`);}
+  const critPat=patterns.filter(p=>p.sev==='kritikal'||p.sev==='tinggi');
+  if(critPat.length)paras.push(`⚠️ **Pemerhatian penting:** ${critPat.map(p=>p.msg.replace(/\*\*/g,'')).join(' ')}`);
+  html+=`<div class="card"><div class="sec-hdr">📋 Ringkasan Minggu Ini</div>${paras.map(p=>`<p style="font-size:var(--fmd);line-height:1.8;color:var(--txt);margin-bottom:12px">${bold(esc(p))}</p>`).join('')}</div>`;
+  const risk=calcRiskScore();
+  if(risk){const r=56,cx=72,cy=72,circ=2*Math.PI*r,dash=circ*risk.score/100,gap=circ-dash;const col=risk.score>=80?'#1A8F68':risk.score>=60?'#9A6010':'#8B2020';
+  html+=`<div class="card"><div class="sec-hdr">🎯 Skor Kawalan Kesihatan (30 hari)</div><div class="risk-ring"><svg width="144" height="144" viewBox="0 0 144 144"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#D1D5DB" stroke-width="14"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${col}" stroke-width="14" stroke-dasharray="${dash.toFixed(1)} ${gap.toFixed(1)}" stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})"/><text x="${cx}" y="${cy-8}" text-anchor="middle" font-size="30" font-weight="800" fill="${col}">${risk.score}</text><text x="${cx}" y="${cy+12}" text-anchor="middle" font-size="12" fill="#4A5568">/ 100</text><text x="${cx}" y="${cy+30}" text-anchor="middle" font-size="12" font-weight="700" fill="${col}">${risk.grade.emoji} ${risk.grade.label}</text></svg></div>${risk.factors.map(f=>`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:var(--fsm);color:var(--txt2);font-weight:600">${f.label}</span><span style="font-size:var(--fsm);font-weight:800;color:${f.color}">${f.val}</span></div><div style="height:8px;border-radius:4px;background:var(--border)"><div style="height:100%;width:${Math.round(f.pts/f.max*100)}%;background:${f.color};border-radius:4px"></div></div></div>`).join('')}</div>`;}
+  const okPats=patterns.filter(p=>p.sev==='ok');const warnPats=patterns.filter(p=>p.sev!=='ok'&&p.sev!=='kritikal'&&p.sev!=='tinggi');
+  if(okPats.length||warnPats.length){html+=`<div class="card"><div class="sec-hdr">💡 Cadangan AI</div>`;[...warnPats,...okPats].forEach(p=>{const c=p.sev==='ok'?'var(--okBg)':'#FFF8EC';const bc=p.sev==='ok'?'var(--green)':'var(--amber)';html+=`<div style="background:${c};border-left:4px solid ${bc};border-radius:10px;padding:12px 14px;margin-bottom:10px;font-size:var(--fmd);line-height:1.7;color:var(--txt)">${p.icon} ${bold(esc(p.msg))}</div>`;});html+=`</div>`;}
+  return html;
+}
+
+function generateInsights(){
+  const gs=aiGlucStats(14),bs=aiBPStats(14);const patterns=detectPatterns();
+  if(!gs&&!bs)return`<div class="empty-state"><div class="empty-ico">🔍</div><p style="font-size:var(--fmd);color:var(--txt2)">Log sekurang-kurangnya 5 bacaan<br>untuk lihat analisis AI.</p></div>`;
+  let html='';
+
+  // FORECAST CARD
+  const fc=forecastFasting();
+  if(fc){
+    const arrow=fc.slope>0.15?'↑':fc.slope<-0.15?'↓':'→';
+    html+=`<div class="card" style="background:${fc.color}11;border:2px solid ${fc.color}44"><div style="font-size:var(--fxs);font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:${fc.color};margin-bottom:8px">🔮 RAMALAN GULA PUASA ESOK</div><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:44px;font-weight:800;color:${fc.color};line-height:1">${fc.value}</div><div style="font-size:var(--fsm);color:var(--txt2);margin-top:4px">mmol/L ${fc.trend}</div></div><div style="text-align:right">${badgeHtml(fc.cls)}<div style="font-size:var(--fxs);color:var(--txt2);margin-top:6px;font-weight:600">Berdasarkan<br>${fc.history.length} bacaan lepas</div></div></div><div style="margin-top:10px;font-size:var(--fxs);color:var(--txt2);font-weight:600">Trend: ${fc.slope>0?'+':''}${fc.slope.toFixed(2)} mmol/L/hari ${arrow}</div>${fc.cls==='tinggi'?`<div style="margin-top:10px;background:var(--danBg);border-radius:8px;padding:10px 12px;font-size:var(--fsm);color:var(--danText);font-weight:700">⚠️ Gula mungkin tinggi esok — pertimbangkan pelarasan dos malam ini.</div>`:fc.cls==='rendah'?`<div style="margin-top:10px;background:var(--lowBg);border-radius:8px;padding:10px 12px;font-size:var(--fsm);color:var(--lowText);font-weight:700">⚠️ Risiko hipoglisemia esok pagi — berhati-hati dengan dos insulin malam.</div>`:''}</div>`;
+  }
+
+  // SYMPTOM CHECKER SHORTCUT
+  html+=`<div class="card" style="background:var(--purBg);border:2px solid var(--purple)"><div style="font-size:var(--fxs);font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--purText);margin-bottom:10px">🩺 SEMAK SIMPTOM</div><p style="font-size:var(--fsm);color:var(--purText);margin-bottom:12px;line-height:1.6">Rasa tidak sihat? Pilih simptom anda:</p><div style="display:flex;flex-wrap:wrap;gap:8px">${['😵 Pening / Pusing','💦 Berpeluh / Menggeletar','🤕 Sakit kepala','👁️ Penglihatan kabur','🦵 Kaki kebas / bengkak','😫 Lemah / Lesu','💧 Dahaga / Kerap kencing','💓 Dada berat / Sesak'].map(s=>`<button class="ai-chip" style="font-size:var(--fxs)" onclick="goTab('ai');setTimeout(()=>{setAiSubTab('chat');setTimeout(()=>_dispatchAiMsg('Saya rasa ${s.replace(/['"]/g,'')}'),100)},100)">${s}</button>`).join('')}</div></div>`;
+
+  // MEAL IMPACT
+  const mealImpact=buildMealImpactTable();
+  if(mealImpact.length){
+    html+=`<div class="card"><div class="sec-hdr">🍽️ Kesan Makanan Terhadap Gula Anda</div><p style="font-size:var(--fxs);color:var(--txt2);margin-bottom:12px;font-weight:600">Berdasarkan nota makanan dalam log bacaan anda</p>${mealImpact.map(f=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)"><div style="font-size:var(--fsm);font-weight:700;color:var(--txt);text-transform:capitalize">${f.food}</div><div style="display:flex;align-items:center;gap:10px"><span style="font-size:var(--fxs);color:var(--txt2);font-weight:600">${f.count}x log</span><span style="font-size:var(--fmd);font-weight:800;color:${f.color}">${f.avg}</span></div></div>`).join('')}<p style="font-size:var(--fxs);color:var(--txt2);margin-top:10px;font-weight:600">💡 Tambah nota makanan semasa log bacaan untuk data lebih tepat.</p></div>`;
+  } else {
+    html+=`<div class="card" style="background:var(--bg);border:1.5px dashed var(--border)"><div style="text-align:center;padding:16px 0"><div style="font-size:32px;margin-bottom:8px">🍽️</div><p style="font-size:var(--fsm);color:var(--txt2);font-weight:700">Analisis Kesan Makanan</p><p style="font-size:var(--fxs);color:var(--txt2);margin-top:6px;line-height:1.6">Tambah nota makanan semasa log bacaan (cth: "makan nasi banyak") untuk AI analisis kesan makanan anda.</p></div></div>`;
+  }
+
+  // PATTERNS
+  if(patterns.length){html+=`<div style="font-size:var(--fxs);font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--ai);margin-bottom:10px;margin-top:4px">🔍 Corak Dikesan (14 hari)</div>`;patterns.forEach(p=>{const sevColor={ok:'var(--green)',sederhana:'var(--amber)',tinggi:'var(--red)',kritikal:'var(--red)'}[p.sev]||'var(--amber)';const sevBg={ok:'var(--okBg)',sederhana:'#FFF8EC',tinggi:'var(--danBg)',kritikal:'var(--danBg)'}[p.sev]||'#FFF8EC';html+=`<div class="insight-card" style="background:${sevBg};border-color:${sevColor}"><div style="font-size:24px;margin-bottom:8px">${p.icon}</div><div style="font-size:var(--fmd);line-height:1.7;color:var(--txt)">${bold(esc(p.msg))}</div></div>`;});}
+
+  // TIMING BREAKDOWN
+  if(gs&&gs.raw.length>=5){html+=`<div class="card"><div class="sec-hdr">⏰ Analisis Mengikut Waktu (14 hari)</div>`;const byT={};TORDER.forEach(t=>{const arr=gs.raw.filter(r=>r.timing===t);if(arr.length>=2){const vals=arr.map(r=>r.value);const avg=aiAvg(vals);const cls=clsGlucose(t,avg);const col=clsColorMap[cls]||'var(--green)';byT[t]={avg:avg.toFixed(1),cls,col,count:arr.length,low:arr.filter(r=>clsGlucose(t,r.value)==='rendah').length,forecast:forecastPostMeal(t)};}});Object.entries(byT).forEach(([t,d])=>{html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)"><div><div style="font-size:var(--fsm);font-weight:700;color:var(--txt)">${TLABELS[t]}</div><div style="font-size:var(--fxs);color:var(--txt2);margin-top:3px">${d.count} bacaan${d.low>0?` · ⚠️ ${d.low} hipo`:''}${d.forecast?` · 🔮 esok: <strong style="color:${clsColorMap[d.forecast.cls]||'var(--green)'}">${d.forecast.value}</strong>`:''}</div></div><div style="text-align:right"><div style="font-size:var(--fxl);font-weight:800;color:${d.col}">${d.avg}</div><div style="font-size:var(--fxs);color:var(--txt2)">mmol/L</div></div></div>`;});html+=`</div>`;}
+
+  // DAY OF WEEK
+  if(gs&&gs.raw.length>=7){const byDow=Array(7).fill(null).map(()=>({sum:0,count:0}));gs.raw.forEach(r=>{const dow=new Date(r.ts).getDay();const idx=dow===0?6:dow-1;byDow[idx].sum+=r.value;byDow[idx].count++;});const dowAvgs=byDow.map(d=>d.count?d.sum/d.count:null);const validDow=dowAvgs.filter(v=>v!==null);if(validDow.length>=4){const maxDow=Math.max(...validDow.filter(Boolean));const minDow=Math.min(...validDow.filter(Boolean));html+=`<div class="card"><div class="sec-hdr">📆 Purata Mengikut Hari</div><div style="display:flex;gap:5px;align-items:flex-end;height:64px;margin-bottom:8px">`;dowAvgs.forEach((v,i)=>{const h=v?Math.max(8,Math.round((v/maxDow)*60)):4;const col=v?clsColorMap[clsGlucose('pra-sarapan',v)]||'var(--green)':'var(--border)';html+=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="height:${h}px;width:100%;background:${col};border-radius:4px"></div><div style="font-size:9px;color:var(--txt2);font-weight:700">${HARI[i]}</div></div>`;});html+=`</div>`;const bestDow=dowAvgs.indexOf(minDow);const worstDow=dowAvgs.indexOf(maxDow);html+=`<div style="font-size:var(--fsm);color:var(--txt2);line-height:1.7">Gula terendah pada hari <strong style="color:var(--green)">${HARI[bestDow]}</strong> (${minDow.toFixed(1)} mmol/L). Tertinggi pada <strong style="color:var(--red)">${HARI[worstDow]}</strong> (${maxDow.toFixed(1)} mmol/L).</div></div>`;}}
+  return html;
+}
+
+// ── AI CHAT ─────────────────────────────────────────────────────
+const AI_INTENTS=[
+  {keys:['purata','average','avg'],fn:()=>{const gs=aiGlucStats(7);if(!gs)return'Tiada data gula minggu ini. Sila log bacaan dahulu.';return`Purata gula darah anda dalam **7 hari** ialah **${gs.avg} mmol/L**.\n\nAnggaran HbA1c: **${gs.hba1c}%** ${parseFloat(gs.hba1c)<7?'✅ (kawalan baik)':'⚠️ (sasaran <7%)'}\n\nTIR (masa dalam julat): **${gs.tir}%** ${gs.tir>=70?'✅':'(sasaran ≥70%)'}`;},chips:['Purata gula saya?']},
+  {keys:['tir','masa dalam julat'],fn:()=>{const gs=aiGlucStats(30);if(!gs)return'Tiada data untuk dikira TIR.';return`**TIR (Masa dalam Julat) — 30 hari**\n\nTIR anda: **${gs.tir}%** ${gs.tir>=70?'✅ Cemerlang':'⚠️ Perlu ditingkatkan'}\n✅ Dalam julat: ${gs.okPct}%\n🔴 Tinggi: ${gs.highN} bacaan\n🔵 Rendah: ${gs.lowN} bacaan\n\nSasaran ADA 2024: ≥70%.`;},chips:['TIR saya?']},
+  {keys:['hba1c','a1c'],fn:()=>{const gs=aiGlucStats(90);if(!gs)return'Log lebih banyak bacaan untuk anggaran HbA1c.';return`**Anggaran HbA1c**\n\nHbA1c ≈ **${gs.hba1c}%**\nBerdasarkan ${gs.count} bacaan (purata ${gs.avg} mmol/L)\n\n${parseFloat(gs.hba1c)<7?'✅ Di bawah sasaran (<7%). Kawalan sangat baik!':parseFloat(gs.hba1c)<8?'⚠️ 7–8%. Boleh diperbaiki lagi.':'🔴 >8%. Perlu perbincangan dengan doktor.'}\n\n⚠️ Ini adalah anggaran sahaja. Uji di makmal untuk kepastian.`;},chips:['HbA1c saya?']},
+  {keys:['hipoglisemia','hipo','rendah','hypo'],fn:()=>{const gs=aiGlucStats(30);if(!gs)return'Tiada data. Sila log bacaan dahulu.';if(gs.lowN===0)return`✅ Tiada episod hipoglisemia dalam **30 hari** lepas. Kawalan yang baik!`;const hypos=gs.raw.filter(r=>clsGlucose(r.timing,r.value)==='rendah').sort((a,b)=>b.ts-a.ts);return`⚠️ **${gs.lowN} episod hipoglisemia** dalam 30 hari.\n\nTerkini: **${hypos[0].value} mmol/L** (${fmtDateShort(hypos[0].ts)})\n\n**Jika gula < 4.0 mmol/L:**\n1. Makan 15g gula pantas segera\n2. Tunggu 15 minit, semak semula\n3. Ulang jika masih rendah\n4. Hubungi doktor jika berlaku ≥2x seminggu`;},chips:['Episod hipoglisemia saya?']},
+  {keys:['tekanan darah','td','bp'],fn:()=>{const bs=aiBPStats(14);if(!bs)return'Tiada data tekanan darah dalam 14 hari.';return`**Tekanan Darah — 14 hari**\n\nPurata: **${bs.avgSys}/${bs.avgDia} mmHg** ${bs.okPct>=70?'✅ Terkawal baik':'⚠️ Memerlukan perhatian'}\n✅ Dalam sasaran: ${bs.okPct}%\n🔴 Tinggi: ${bs.highN} bacaan\n\nSasaran: <130/80 mmHg`;},chips:['Tekanan darah saya?']},
+  {keys:['corak','pattern','trend','analisis'],fn:()=>{const p=detectPatterns();if(!p.length)return'Belum cukup data untuk mengesan corak. Log bacaan secara konsisten 5–7 hari.';return`**${p.length} corak dikesan:**\n\n`+p.map((x,i)=>`${i+1}. ${x.msg.replace(/\*\*/g,'')}`).join('\n\n');},chips:['Analisis corak saya']},
+  {keys:['ringkasan','summary','laporan','minggu'],fn:()=>{const gs=aiGlucStats(7),bs=aiBPStats(7);const parts=[];if(gs)parts.push(`🩸 Gula: purata **${gs.avg} mmol/L**, TIR **${gs.tir}%**, ${gs.lowN} hipo, ${gs.highN} tinggi`);if(bs)parts.push(`🫀 TD: purata **${bs.avgSys}/${bs.avgDia}**, ${bs.okPct}% dalam sasaran`);if(!parts.length)return'Tiada data minggu ini.';return`**Ringkasan 7 Hari:**\n\n${parts.join('\n')}\n\nPergi ke tab **Ringkasan** untuk laporan lengkap.`;},chips:['Ringkasan minggu ini']},
+  {keys:['skor','score'],fn:()=>{const r=calcRiskScore();if(!r)return'Log lebih banyak bacaan untuk kira skor.';return`**Skor Kawalan Kesihatan: ${r.score}/100**\n\n${r.grade.emoji} Gred: **${r.grade.label}**\n\n${r.factors.map(f=>`• ${f.label}: ${f.val} (${f.pts}/${f.max} mata)`).join('\n')}`;},chips:['Skor kesihatan saya?']},
+  {keys:['dos','insulin','ubat','titrate'],fn:()=>{const gs=aiGlucStats(3);if(!gs)return'Tiada data terkini. Log bacaan 3 hari terakhir dahulu.';const fasting=gs.raw.filter(r=>r.timing==='pra-sarapan').map(r=>r.value);const fastAvg=aiAvg(fasting);if(!fastAvg)return`Tiada bacaan pra-sarapan dalam 3 hari. Log bacaan puasa untuk cadangan titration.`;if(insulinType==='oral')return`Untuk **ubat oral**, pelarasan dos perlu dibuat oleh doktor. Gula puasa purata (3 hari): **${fastAvg.toFixed(1)} mmol/L** (sasaran: 4.0–7.0).\n\nJika kekal tinggi 3 hari berturut-turut, hubungi klinik.`;if(insulinType==='premix')return`**Titration Premix (MOH CPG):**\n\nGula puasa purata: **${fastAvg.toFixed(1)} mmol/L**\n\n${fastAvg>7.0?`🔼 Tingkatkan premix MALAM 2 unit bermula malam ini.`:fastAvg<4.0?`🔽 Kurangkan premix MALAM 2 unit.`:'✅ Dos semasa sesuai.'}\n\n⚠️ Berbincang dengan doktor sebelum ubah dos.`;return`**Titration Basal-Bolus (MOH CPG):**\n\nGula puasa purata: **${fastAvg.toFixed(1)} mmol/L**\n\n${fastAvg>7.0?`🔼 Tingkatkan insulin BASAL 2 unit bermula malam ini.`:fastAvg<4.0?`🔽 Kurangkan insulin BASAL 2 unit.`:'✅ Dos basal semasa sesuai.'}\n\n⚠️ Jangan ubah dos tanpa nasihat doktor.`;},chips:['Cadangan dos insulin?']},
+  {keys:['senaman','exercise','aktif'],fn:()=>'**Panduan Senaman untuk Diabetes:**\n\n✅ Sasaran: 150 minit/minggu aerobik sederhana\n🏃 Berjalan pantas, berenang, berbasikal\n💪 Latihan rintangan 2–3x/minggu\n\n**Semak gula sebelum bersenam:**\n• < 7.0 mmol/L → makan snek dahulu\n• 7–14 mmol/L → selamat untuk bersenam\n• > 14.0 mmol/L → tangguhkan\n\nBerjalan 10 minit selepas makan mengurangkan gula ~1–2 mmol/L.',chips:['Panduan senaman?']},
+  {keys:['diet','makan','makanan','karbohidrat','nasi'],fn:()=>'**Panduan Pemakanan Diabetes:**\n\n🍚 Karbohidrat: 45–60g per hidangan\n🥗 Kaedah Pinggan:\n• ½ pinggan sayuran\n• ¼ pinggan karbohidrat GI rendah\n• ¼ pinggan protein tanpa lemak\n\n🟢 Pilih: oat, ubi keledek, beras perang\n🔴 Elakkan: nasi putih berlebihan, minuman bergula\n🧂 Hadkan garam: <2,000mg/hari',chips:['Panduan pemakanan?']},
+  // FORECAST
+  {keys:['ramalan','forecast','esok','jangkaan','predict','besok'],fn:()=>{
+    const fc=forecastFasting();
+    if(!fc)return'Log sekurang-kurangnya 3 bacaan pra-sarapan untuk ramalan gula puasa.';
+    const warn=fc.cls==='tinggi'?'\n\n⚠️ Ramalan menunjukkan gula puasa mungkin **tinggi esok**. Pertimbangkan pelarasan dos malam ini.':fc.cls==='rendah'?'\n\n⚠️ Ramalan menunjukkan risiko **hipoglisemia esok pagi**. Berhati-hati dengan dos insulin malam.':'\n\n✅ Ramalan dalam julat sasaran. Teruskan amalan semasa.';
+    return`**Ramalan Gula Puasa Esok**\n\nJangkaan: **${fc.value} mmol/L** ${fc.trend}\nBerdasarkan ${fc.history.length} bacaan pra-sarapan terkini\n\nTrend semasa: ${fc.slope>0?'+':''}${fc.slope.toFixed(2)} mmol/L sehari${warn}\n\n⚠️ Ini adalah anggaran sahaja berdasarkan trend lepas.`;
+  },chips:['Ramalan gula esok?']},
+
+  // SYMPTOM CHECKER
+  {keys:['rasa','simptom','symptom','pening','pusing','sakit','loya','berpeluh','lemah','lesu','kebas','bengkak','kabur','sesak','dada','kaki','dahaga','kencing','keletihan','menggeletar','mengantuk'],fn:(msg)=>{
+    const match=matchSymptoms(msg);
+    if(!match)return'Sila terangkan simptom anda dengan lebih terperinci. Contoh: "saya rasa pening dan berpeluh" atau "kaki saya bengkak".';
+    return`**${match.icon} ${match.title}**\nTindakan diperlukan: **${match.urgency}**\n\n**Apa yang perlu dilakukan:**\n${match.actions.map((a,i)=>`${i+1}. ${a.replace(/\*\*/g,'')}`).join('\n')}\n\n💡 ${match.note}`;
+  },chips:['Saya rasa pening dan berpeluh','Sakit kepala dan penglihatan kabur','Kaki saya kebas dan bengkak','Rasa dahaga dan kerap kencing']},
+
+  // MEAL IMPACT
+  {keys:['makanan apa','kesan makanan','impact makanan','meal impact','makanan mana','elak makanan','pantang'],fn:()=>{
+    const table=buildMealImpactTable();
+    if(!table.length)return'Tambah nota makanan semasa log bacaan (cth: "makan nasi banyak") untuk saya analisis kesan makanan terhadap gula anda. Semakin banyak nota, semakin tepat analisis!';
+    const bad=table.filter(f=>f.cls==='tinggi');const ok=table.filter(f=>f.cls!=='tinggi');
+    let resp=`**Analisis Kesan Makanan (berdasarkan nota anda)**\n\n`;
+    if(bad.length){resp+=`🔴 **Makanan yang menaikkan gula:**\n${bad.map(f=>`• ${f.food}: purata **${f.avg} mmol/L** (${f.count} bacaan)`).join('\n')}\n\n`;}
+    if(ok.length){resp+=`✅ **Makanan dengan kesan baik:**\n${ok.map(f=>`• ${f.food}: purata **${f.avg} mmol/L** (${f.count} bacaan)`).join('\n')}\n\n`;}
+    resp+=`💡 Log nota makanan lebih kerap untuk analisis yang lebih tepat!`;
+    return resp;
+  },chips:['Makanan apa yang menaikkan gula saya?']},
+
+  {keys:['terima kasih','thanks','bagus'],fn:()=>'Sama-sama! Jaga kesihatan anda ya. 😊',chips:[]},
+  {keys:['hello','hai','helo','hi','selamat'],fn:()=>{const gs=aiGlucStats(7);return`Hai! Saya Pembantu AI HealthLog Pro 🤖\n\n${gs?`Data 7 hari: gula purata **${gs.avg} mmol/L**, TIR **${gs.tir}%**.`:'Belum ada data minggu ini.'}\n\nSaya boleh bantu dengan:\n• Analisis gula darah & TD\n• Corak & trend bacaan\n• Cadangan dos insulin\n• Tips diet & senaman`;},chips:[]},
+];
+const QUICK_CHIPS=['😵 Saya rasa pening','Ramalan gula esok?','Makanan apa yang menaikkan gula?','Purata gula saya?','TIR saya?','Hipoglisemia saya?','Tekanan darah saya?','Cadangan dos insulin?'];
+function aiProcessMsg(msg){
+  const q=msg.toLowerCase().trim();
+  // Symptom check first — if user describes feeling unwell
+  const symMatch=matchSymptoms(q);
+  if(symMatch&&symMatch.score>=1&&(q.includes('rasa')||q.includes('saya')||q.includes('sy')||symMatch.score>=2)){
+    const match=symMatch;
+    return{text:`**${match.icon} ${match.title}**\nTindakan diperlukan: **${match.urgency}**\n\n**Apa yang perlu dilakukan:**\n${match.actions.map((a,i)=>`${i+1}. ${a.replace(/\*\*/g,'')}`).join('\n')}\n\n💡 ${match.note}`,chips:['Semak gula darah saya','Tekanan darah saya?']};
+  }
+  for(const intent of AI_INTENTS){if(intent.keys.some(k=>q.includes(k)))return{text:typeof intent.fn==='function'?intent.fn(msg):intent.fn,chips:intent.chips||[]};}
+  const gs=aiGlucStats(7);
+  return{text:gs?`Berdasarkan data 7 hari anda — gula purata **${gs.avg} mmol/L**, TIR **${gs.tir}%**.\n\nCuba tanya:\n• "Saya rasa pening" — semak simptom\n• "Ramalan esok" — jangkaan gula\n• "Makanan apa yang sesuai" — analisis kesan makanan`:'Saya tidak faham. Cuba tanya tentang: simptom, gula darah, tekanan darah, ramalan, atau makanan.',chips:['Saya rasa pening dan berpeluh','Ramalan gula esok?','Makanan apa yang menaikkan gula?']};
+}
+
+function renderAI(){
+  document.getElementById('ai-subtab-row').innerHTML=[['chat','💬 Chat'],['insights','🔍 Analisis'],['summary','📋 Ringkasan']].map(([t,l])=>`<button class="ai-tab-btn ${aiSubTab===t?'sel':''}" onclick="setAiSubTab('${t}')">${l}</button>`).join('');
+  document.getElementById('ai-chat-view').style.display=aiSubTab==='chat'?'flex':'none';
+  document.getElementById('ai-insights-view').style.display=aiSubTab==='insights'?'block':'none';
+  document.getElementById('ai-summary-view').style.display=aiSubTab==='summary'?'block':'none';
+  if(aiSubTab==='chat')renderAiChat();
+  if(aiSubTab==='insights')document.getElementById('ai-insights-view').innerHTML=generateInsights();
+  if(aiSubTab==='summary')document.getElementById('ai-summary-view').innerHTML=generateWeeklySummary();
+}
+function setAiSubTab(t){aiSubTab=t;document.querySelectorAll('.ai-tab-btn').forEach(b=>b.classList.remove('sel'));const idx=['chat','insights','summary'].indexOf(t);document.querySelectorAll('.ai-tab-btn')[idx]?.classList.add('sel');document.getElementById('ai-chat-view').style.display=t==='chat'?'flex':'none';document.getElementById('ai-insights-view').style.display=t==='insights'?'block':'none';document.getElementById('ai-summary-view').style.display=t==='summary'?'block':'none';if(t==='insights')document.getElementById('ai-insights-view').innerHTML=generateInsights();if(t==='summary')document.getElementById('ai-summary-view').innerHTML=generateWeeklySummary();if(t==='chat')renderAiChat();}
+function renderAiChat(){const msgEl=document.getElementById('ai-messages');const chipsEl=document.getElementById('ai-chips');if(!aiHistory.length){const gs=aiGlucStats(7);const welcome=gs?`Hai! Saya Pembantu AI HealthLog Pro 🤖\n\nData 7 hari anda: gula purata **${gs.avg} mmol/L**, TIR **${gs.tir}%**.\n\nTanya saya apa-apa tentang kesihatan anda!`:`Hai! Saya Pembantu AI HealthLog Pro 🤖\n\nSaya analisa data bacaan anda secara **luar talian sepenuhnya**.\n\nMula log bacaan, kemudian tanya saya untuk analisis.`;msgEl.innerHTML=msgBotHtml(welcome);}else{msgEl.innerHTML=aiHistory.map(m=>m.role==='user'?msgUserHtml(m.text):msgBotHtml(m.text)).join('');}chipsEl.innerHTML=(!aiHistory.length?QUICK_CHIPS:[]).map(c=>`<button class="ai-chip" onclick="sendChip(this)">${esc(c)}</button>`).join('');setTimeout(()=>{msgEl.scrollTop=msgEl.scrollHeight;},50);}
+function msgBotHtml(text){const lines=text.split('\n');const formatted=lines.map(l=>`<div>${bold(esc(l))||'&nbsp;'}</div>`).join('');return `<div class="msg-row"><div class="msg-avatar bot">🤖</div><div class="msg-bubble bot">${formatted}</div></div>`;}
+function msgUserHtml(text){return `<div class="msg-row user"><div class="msg-avatar user">👤</div><div class="msg-bubble user">${esc(text)}</div></div>`;}
+function addTypingIndicator(){const msgEl=document.getElementById('ai-messages');const div=document.createElement('div');div.className='msg-row';div.id='ai-typing';div.innerHTML=`<div class="msg-avatar bot">🤖</div><div class="msg-bubble bot"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>`;msgEl.appendChild(div);msgEl.scrollTop=msgEl.scrollHeight;}
+function removeTypingIndicator(){const el=document.getElementById('ai-typing');if(el)el.remove();}
+function sendAiMsg(){if(aiTyping)return;const inp=document.getElementById('ai-inp');const msg=inp.value.trim();if(!msg)return;inp.value='';_dispatchAiMsg(msg);}
+function sendChip(btn){if(aiTyping)return;_dispatchAiMsg(btn.textContent);}
+function _dispatchAiMsg(msg){aiTyping=true;aiHistory.push({role:'user',text:msg});const msgEl=document.getElementById('ai-messages');msgEl.insertAdjacentHTML('beforeend',msgUserHtml(msg));document.getElementById('ai-chips').innerHTML='';msgEl.scrollTop=msgEl.scrollHeight;addTypingIndicator();setTimeout(()=>{removeTypingIndicator();const resp=aiProcessMsg(msg);aiHistory.push({role:'bot',text:resp.text});msgEl.insertAdjacentHTML('beforeend',msgBotHtml(resp.text));if(resp.chips&&resp.chips.length){document.getElementById('ai-chips').innerHTML=resp.chips.map(c=>`<button class="ai-chip" onclick="sendChip(this)">${esc(c)}</button>`).join('');}msgEl.scrollTop=msgEl.scrollHeight;aiTyping=false;saveToStorage();},300+Math.random()*300);}
+function clearAiChat(){aiHistory=[];renderAiChat();saveToStorage();}
+
+// ── TABBAR — all 7 tabs ────────────────────────────────────────
+function tabbarHtml(active){
+  return[['home','🏠','Utama'],['history','📋','Sejarah'],['stats','📈','Statistik'],['dashboard','📅','Kalendar'],['lifestyle','🥗','Diet'],['ai','🤖','AI']].map(([t,icon,label])=>`<button class="tab ${active===t?'active':''}" onclick="goTab('${t}')"><span class="tab-icon">${icon}</span>${label}</button>`).join('');
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────
+function goTab(tab){
+  if(tab==='history'){detailRecord=null;clearConfirm=false;}
+  if(tab==='home'){showAdvice=false;}
+  currentTab=tab;
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s-'+tab).classList.add('active');
+  document.querySelectorAll('[id^="tabbar-"]').forEach(el=>{el.innerHTML=tabbarHtml(tab);});
+  if(tab==='home'){renderHome();renderLog();}
+  if(tab==='history')renderHistory();
+  if(tab==='stats')renderStats();
+  if(tab==='dashboard')renderCalendar();
+  if(tab==='lifestyle')renderLifestyle();
+  if(tab==='ai')renderAI();
+}
+
+// ── ADVICE ENGINE ──────────────────────────────────────────────
+function buildAdvice(r){if(r.type==='bp')return getBPAdv(r.sys,r.dia,clsBP(r.sys,r.dia),r.pulse);const cls=clsGlucose(r.timing,r.value);if(insulinType==='basal-bolus'&&!r.timing.startsWith('2j-')&&cls==='tinggi'&&r.timing!=='pra-sarapan')return getPrevMealAdv(r.timing,r.value);return getGlucAdv(r.timing,r.value,cls,insulinType);}
+function getGlucAdv(t,val,cls,itype){if(cls==='rendah')return getLowAdv(t,val,itype);if(cls==='ok')return getOKAdv(t,val);if(itype==='premix')return getPremixHighAdv(t,val);if(itype==='basal-bolus')return getBBHighAdv(t,val);return getOralHighAdv(t,val);}
+function getLowAdv(timing,val,itype){const isF=timing==='pra-sarapan',isPM=itype==='premix',isBB=itype==='basal-bolus';let doseNote=null;if(isF&&isPM)doseNote='Kurangkan dos **insulin premix MALAM** sebanyak **2 unit** bermula malam ini.';else if(isF&&isBB)doseNote='Kurangkan dos **insulin BASAL (pra-tidur)** sebanyak **2 unit** bermula malam ini.';else if(!isF&&isPM)doseNote='Kurangkan dos **insulin premix** berkaitan waktu ini sebanyak **2 unit** pada suntikan berikutnya.';else if(!isF&&isBB)doseNote='Kurangkan dos **insulin rapid** sebelum makan ini sebanyak **2 unit** mulai esok.';else if(itype==='oral')doseNote='Semak dos ubat oral — hubungi klinik jika hipoglisemia berulang.';const steps=[{c:'var(--red)',t:'Makan **15g gula pantas SEKARANG** — 3 tablet glukosa, ATAU ½ tin minuman bergas biasa, ATAU 1 sudu besar gula dicairkan dalam air.'},{c:'var(--red)',t:'**Duduk dan rehat.** Tunggu **15 minit** kemudian semak semula gula darah.'},{c:'var(--red)',t:'Jika gula masih **< 4.0 mmol/L** — ulang langkah 1. Jangan bersendirian.'},{c:'var(--red)',t:'Setelah gula **> 4.0** — makan snek berprotein (biskut + keju) untuk kekalkan paras stabil.'}];if(doseNote)steps.push({c:'var(--red)',t:doseNote});return{color:'var(--red)',icon:'🚨',hdr:'Gula darah SANGAT RENDAH',acBg:'#FFF0F0',acBd:'var(--red)',acTitle:'🚨 Rawat Segera — Peraturan 15-15',acBody:`Bacaan ${val} mmol/L adalah berbahaya. Bertindak serta-merta.`,steps,mon:['Semak semula selepas 15 minit','Hubungi klinik jika berulang >2 kali seminggu'],stop:'Jika rasa pengsan, keliru, atau tidak boleh menelan — pergi ke A&E segera.',tNote:doseNote?`Pengurangan dos: ${doseNote}`:null,pulseAdv:null};}
+function getOKAdv(timing,val){return{color:'var(--green)',icon:'✅',hdr:'Bacaan dalam julat normal',acBg:'var(--okBg)',acBd:'#1A4D1A',acTitle:'👍 Tahniah! Bacaan dalam julat sasaran.',acBody:`Bacaan ${TLABELS[timing]} anda (${val} mmol/L) adalah dalam julat sihat.`,steps:[{c:'var(--green)',t:'Teruskan ubat-ubatan seperti biasa.'},{c:'var(--green)',t:'Kekalkan pemakanan seimbang rendah karbohidrat dan rendah gula.'},{c:'var(--green)',t:'Kekal aktif — berjalan kaki 30 minit sehari.'},{c:'var(--green)',t:'Rekod bacaan seterusnya mengikut jadual.'}],mon:['Log bacaan seterusnya tepat masa'],stop:null,tNote:null,pulseAdv:null};}
+function getOralHighAdv(timing,val){const isPost=timing.startsWith('2j-');return{color:'var(--amber)',icon:'⚠️',hdr:'Gula darah melebihi sasaran',acBg:'#FFF8EC',acBd:'var(--amber)',acTitle:'⚠️ Gula darah tinggi',acBody:isPost?`Gula ${val} mmol/L selepas makan adalah tinggi.`:`Gula pra-makan ${val} mmol/L melebihi sasaran.`,steps:[{c:'var(--amber)',t:isPost?'Berjalan kaki **10–15 minit** selepas makan.':'Rehat dan elakkan makanan manis atau berkanji.'},{c:'var(--amber)',t:'Minum **segelas air kosong** (250ml).'},{c:'var(--amber)',t:'Pada hidangan seterusnya, kurangkan nasi/roti/mee kepada **separuh porsi biasa**.'},{c:'var(--amber)',t:'Pastikan ubat diambil **30 minit sebelum makan**.'}],mon:['Hubungi klinik jika bacaan kekal tinggi **3 hari berturut-turut**'],stop:null,tNote:'MOH CPG: Hubungi klinik jika bacaan kekal melebihi sasaran 3 hari berturut-turut.',pulseAdv:null};}
+function getPremixHighAdv(timing,val){const nightDose='insulin premix MALAM',morningDose='insulin premix PAGI';let adj,adjTime,sebab;if(['pra-sarapan','2j-selepas-makan-malam','pra-tidur'].includes(timing)){adj=nightDose;adjTime='malam ini';sebab='Gula tinggi — insulin premix malam tidak mencukupi.';}else{adj=morningDose;adjTime='esok pagi';sebab='Bacaan tinggi — insulin premix pagi tidak mencukupi.';}return{color:'var(--purple)',icon:'💉',hdr:'Gula tinggi — laraskan dos premix',acBg:'var(--purBg)',acBd:'var(--purple)',acTitle:`💉 Tingkatkan ${adj} sebanyak 2 unit`,acBody:sebab,steps:[{c:'var(--purple)',t:`Tingkatkan **${adj}** sebanyak **2 unit** bermula ${adjTime}.`},{c:'var(--purple)',t:`Kekalkan selama **3 hari** dan semak bacaan setiap hari.`},{c:'var(--purple)',t:'Jika masih melebihi sasaran selepas 3 hari → tingkatkan **2 unit lagi**.'},{c:'var(--purple)',t:'**Jangan ubah** dos premix lain pada masa yang sama.'}],mon:['Semak bacaan setiap hari','Hentikan jika gula < 4.0 mmol/L','Hubungi klinik jika telah tingkat >6 unit tanpa perbaikan'],stop:'Hentikan dan hubungi klinik jika gula < 4.0 mmol/L.',tNote:`MOH CPG 3-3: Tingkatkan ${adj} 2 unit setiap 3 hari sehingga sasaran.`,pulseAdv:null};}
+function getBBHighAdv(timing,val){if(timing==='pra-sarapan'){return{color:'var(--blue)',icon:'🌙',hdr:'Gula puasa tinggi — laraskan basal',acBg:'var(--lowBg)',acBd:'var(--blue)',acTitle:'🌙 Tingkatkan insulin BASAL 2 unit',acBody:'Gula puasa tinggi — dos basal pra-tidur tidak mencukupi.',steps:[{c:'var(--blue)',t:'Tingkatkan **insulin basal (pra-tidur)** sebanyak **2 unit** bermula malam ini.'},{c:'var(--blue)',t:'Kekalkan selama **3 hari** dan semak gula puasa setiap pagi.'},{c:'var(--blue)',t:'Jika masih **> 7.0 mmol/L** selepas 3 hari → tingkatkan **2 unit lagi**.'},{c:'var(--blue)',t:'**Jangan ubah** dos insulin rapid.'}],mon:['Semak gula puasa setiap pagi','Hentikan jika gula puasa < 4.0 mmol/L'],stop:'Hentikan dan hubungi klinik jika gula puasa < 4.0 mmol/L.',tNote:'Peraturan 3-3-3 MOH CPG.',pulseAdv:null};}const pmMap={'2j-selepas-sarapan':{dose:'insulin rapid PRA-SARAPAN',meal:'sarapan'},'2j-selepas-tengahari':{dose:'insulin rapid PRA-TENGAHARI',meal:'tengahari'},'2j-selepas-makan-malam':{dose:'insulin rapid PRA-MAKAN MALAM',meal:'makan malam'}};const prev=pmMap[timing];if(!prev)return getOralHighAdv(timing,val);return{color:'var(--dgreen)',icon:'💉',hdr:`Gula selepas ${prev.meal} tinggi`,acBg:'#FFF8EC',acBd:'var(--amber)',acTitle:`💉 Tingkatkan ${prev.dose} 2 unit`,acBody:`Gula 2 jam selepas ${prev.meal} masih tinggi.`,steps:[{c:'var(--amber)',t:`Tingkatkan **${prev.dose}** sebanyak **2 unit** bermula esok.`},{c:'var(--amber)',t:`Kekalkan selama **3 hari** dan semak bacaan setiap hari.`},{c:'var(--amber)',t:'Jika masih > 8.5 mmol/L selepas 3 hari → tingkatkan **2 unit lagi**.'},{c:'var(--amber)',t:`Hanya **${prev.dose}** yang berubah — dos lain kekal sama.`}],mon:[`Semak 2j selepas ${prev.meal} setiap hari`],stop:`Hentikan jika bacaan selepas ${prev.meal} < 4.0 mmol/L.`,tNote:`MOH CPG: tingkatkan ${prev.dose} 2 unit setiap 3 hari.`,pulseAdv:null};}
+function getPrevMealAdv(timing,val){const prevMap={'pra-tengahari':{dose:'insulin rapid PRA-SARAPAN',meal:'sarapan',next:'tengahari'},'pra-makan-malam':{dose:'insulin rapid PRA-TENGAHARI',meal:'tengahari',next:'makan malam'},'pra-tidur':{dose:'insulin rapid PRA-MAKAN MALAM',meal:'makan malam',next:'tidur'}};const prev=prevMap[timing];if(!prev)return getBBHighAdv(timing,val);return{color:'var(--amber)',icon:'💉',hdr:`Gula pra-${prev.next} tinggi`,acBg:'#FFF8EC',acBd:'var(--amber)',acTitle:`💉 Tingkatkan ${prev.dose} 2 unit`,acBody:`Gula tinggi sebelum ${prev.next} (${val} mmol/L) — insulin rapid sebelum ${prev.meal} tidak mencukupi.`,steps:[{c:'var(--amber)',t:`Tingkatkan **${prev.dose}** sebanyak **2 unit** bermula esok.`},{c:'var(--amber)',t:'Kekalkan selama **3 hari** dan pantau bacaan setiap hari.'},{c:'var(--amber)',t:'Jika masih tinggi → tingkatkan **2 unit lagi**.'},{c:'var(--amber)',t:`Hanya **${prev.dose}** berubah — semua dos lain kekal sama.`}],mon:[`Pantau bacaan ${TLABELS[timing]} setiap hari`],stop:'Hentikan jika gula < 4.0 mmol/L.',tNote:`MOH CPG: tingkatkan ${prev.dose} 2 unit setiap 3 hari.`,pulseAdv:null};}
+function getPulseAdv(pulse,bpCls){const cls=clsPulse(pulse);if(!cls||cls==='ok')return null;if(cls==='rendah')return{icon:'💓',title:'Nadi perlahan (Bradikardia)',color:'var(--blue)',bg:'var(--lowBg)',border:'var(--blue)',body:`Nadi ${pulse} bpm di bawah normal (60–100 bpm).`,steps:['Duduk atau berbaring. Rehat 5 minit.','Perhatikan jika ada pening, lemah, atau sesak nafas.','Hubungi klinik jika nadi kekal < 50 bpm.'],stop:'Pergi A&E jika nadi < 40 bpm, pengsan, atau sakit dada.'};return{icon:'💓',title:'Nadi laju (Takikardia)',color:'var(--amber)',bg:'#FFF8EC',border:'var(--amber)',body:`Nadi ${pulse} bpm di atas normal (60–100 bpm).`,steps:['Rehat dan duduk tenang 5–10 minit.','Ambil nafas perlahan dan dalam.','Elakkan kafein dan senaman berat.',bpCls==='tinggi'||bpCls==='kritikal'?'⚠️ Nadi laju + TD tinggi — hubungi klinik hari ini.':'Semak semula nadi selepas 10 minit.'],stop:'Pergi A&E jika nadi > 150 bpm, sakit dada, atau pengsan.'};}
+function getBPAdv(sys,dia,cls,pulse){const pa=getPulseAdv(pulse,cls);const base={pulseAdv:pa};if(cls==='ok')return{...base,color:'var(--green)',icon:'✅',hdr:'Tekanan darah normal',acBg:'var(--okBg)',acBd:'#1A4D1A',acTitle:'👍 Tekanan darah terkawal!',acBody:`${sys}/${dia} mmHg dalam julat sasaran.`,steps:[{c:'var(--green)',t:'Ambil ubat tekanan darah pada masa biasa.'},{c:'var(--green)',t:'Amalkan diet rendah garam.'},{c:'var(--green)',t:'Kekal aktif — senaman ≥150 minit/minggu.'}],mon:['Semak TD esok pagi'],stop:null,tNote:null};if(cls==='tinggi')return{...base,color:'var(--red)',icon:'⬆️',hdr:'Tekanan darah tinggi',acBg:'var(--danBg)',acBd:'var(--red)',acTitle:'⚠️ TD tinggi — tindakan diperlukan',acBody:`${sys}/${dia} mmHg melebihi sasaran (<130/80).`,steps:[{c:'var(--red)',t:'Rehat tenang **5–10 minit** dalam posisi duduk.'},{c:'var(--red)',t:'Semak dan ambil **ubat tekanan darah** jika belum diambil.'},{c:'var(--red)',t:'Semak bacaan semula selepas 5 minit rehat.'},{c:'var(--red)',t:'Elakkan kafein dan aktiviti berat.'}],mon:['Semak semula dalam 15–30 minit','Hubungi klinik jika TD kekal tinggi'],stop:'Pergi A&E SEGERA jika sakit dada, sakit kepala teruk, atau penglihatan kabur.',tNote:'Sasaran TD: <130/80 mmHg.'};if(cls==='rendah')return{...base,color:'var(--blue)',icon:'⬇️',hdr:'Tekanan darah rendah',acBg:'var(--lowBg)',acBd:'var(--blue)',acTitle:'⬇️ TD rendah',acBody:`${sys}/${dia} mmHg di bawah 90/60.`,steps:[{c:'var(--blue)',t:'**Duduk atau berbaring** segera. Jangan berdiri tiba-tiba.'},{c:'var(--blue)',t:'Minum **1–2 gelas air kosong** perlahan.'},{c:'var(--blue)',t:'**Tangguhkan ubat TD** hari ini — hubungi klinik.'},{c:'var(--blue)',t:'Berdiri perlahan-lahan dan pegang sesuatu untuk sokongan.'}],mon:['Semak semula dalam 15–30 minit'],stop:'Pergi A&E jika pengsan atau TD < 80/50 mmHg.',tNote:'Semak semula dos ubat dengan doktor.'};return{...base,color:'var(--red)',icon:'🚨',hdr:'Tekanan darah KRITIKAL',acBg:'var(--danBg)',acBd:'var(--red)',acTitle:'🚨 KRITIKAL — Bantuan Perubatan SEGERA',acBody:`TD ${sys}/${dia} mmHg ≥180/120 — Kecemasan Hipertensi.`,steps:[{c:'var(--red)',t:'**Duduk dan kekal tenang.**'},{c:'var(--red)',t:'Hubungi ahli keluarga atau seseorang **segera**.'},{c:'var(--red)',t:'**Pergi ke A&E sekarang.**'},{c:'var(--red)',t:'**JANGAN memandu sendiri.**'}],mon:['Pergi hospital segera'],stop:'INI KECEMASAN PERUBATAN. Jangan tunggu.',tNote:'≥180/120 mmHg = Hypertensive Emergency.'};}
+
+// ── RENDER HELPERS ────────────────────────────────────────────
+function adviceHtml(adv,onLog){
+  const sH=adv.steps.map((s,i)=>`<div class="step-row"><div class="step-num" style="background:${s.c}">${i+1}</div><div class="step-txt">${bold(esc(s.t))}</div></div>`).join('');
+  const mH=adv.mon.map(m=>`<div class="mon-row"><span class="mon-arr">›</span>${bold(esc(m))}</div>`).join('');
+  const stH=adv.stop?`<div class="stop-box"><p style="font-size:var(--fmd);color:var(--danText);font-weight:800;margin-bottom:6px">⛔ Dapatkan bantuan segera jika</p><p style="font-size:var(--fsm);color:var(--red);line-height:1.7">${esc(adv.stop)}</p></div>`:'';
+  const tH=adv.tNote?`<div class="tit-box"><p style="font-size:var(--fxs);font-weight:800;color:var(--purText);margin-bottom:6px;text-transform:uppercase">📋 Rujukan Klinikal</p><p style="font-size:var(--fsm);color:var(--purText);line-height:1.8">${bold(esc(adv.tNote))}</p></div>`:'';
+  const pH=adv.pulseAdv?`<div class="pulse-box" style="background:${adv.pulseAdv.bg};border-color:${adv.pulseAdv.border}"><p style="font-size:var(--fmd);font-weight:800;color:${adv.pulseAdv.color};margin-bottom:6px">${adv.pulseAdv.icon} ${esc(adv.pulseAdv.title)}</p><p style="font-size:var(--fsm);color:${adv.pulseAdv.color};margin-bottom:12px;line-height:1.7">${esc(adv.pulseAdv.body)}</p>${adv.pulseAdv.steps.map((s,i)=>`<div class="step-row"><div class="step-num" style="background:${adv.pulseAdv.color}">${i+1}</div><div class="step-txt">${esc(s)}</div></div>`).join('')}${adv.pulseAdv.stop?`<div class="stop-box" style="margin-top:10px"><p style="font-size:var(--fsm);color:var(--red);font-weight:800;margin-bottom:3px">⛔ Dapatkan bantuan jika</p><p style="font-size:var(--fsm);color:var(--red);line-height:1.6">${esc(adv.pulseAdv.stop)}</p></div>`:''}</div>`:'';
+  return `<div style="background:${adv.color};padding:16px 18px 20px;flex-shrink:0"><span style="font-size:var(--fxs);color:rgba(255,255,255,.7);font-weight:800;letter-spacing:.1em">HEALTHLOG PRO</span><div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><p style="font-size:var(--fmd);font-weight:800;color:#fff;line-height:1.3">${esc(adv.hdr)}</p><span style="font-size:36px">${adv.icon}</span></div></div><div style="padding:14px"><div class="adv-box" style="background:${adv.acBg};border-color:${adv.acBd}"><p style="font-size:var(--fmd);font-weight:800;color:${adv.acBd};margin-bottom:8px">${esc(adv.acTitle)}</p><p style="font-size:var(--fsm);color:${adv.acBd};line-height:1.7">${esc(adv.acBody)}</p></div><div class="card"><div class="sec-hdr">Apa yang perlu dilakukan</div>${sH}</div><div class="card"><div class="sec-hdr">Pemantauan seterusnya</div>${mH}</div>${stH}${tH}${pH}<button class="save-btn" onclick="${onLog}" style="margin-bottom:14px">+ Log Bacaan Lain</button></div>`;
+}
+
+// ── HOME ──────────────────────────────────────────────────────
+function renderHome(){
+  const now=Date.now();
+  document.getElementById('home-date').textContent=fmtDateFull(now);
+  const w7=readings.filter(r=>(now-r.ts)<7*86400000);
+  const ok=w7.filter(r=>(r.type==='glucose'&&clsGlucose(r.timing,r.value)==='ok')||(r.type==='bp'&&clsBP(r.sys,r.dia)==='ok')).length;
+  const tirPct=w7.length?Math.round(ok/w7.length*100):0;
+  const g30=readings.filter(r=>r.type==='glucose').sort((a,b)=>b.ts-a.ts).slice(0,30);
+  const avg30=g30.length?g30.reduce((s,r)=>s+r.value,0)/g30.length:0;
+  const hba1c=avg30?((avg30+2.59)/1.59).toFixed(1):'—';
+  document.getElementById('home-stats').innerHTML=[{l:'TIR 7 hari',v:`${tirPct}%`,s:'Dalam julat',c:tirPct>=70?'var(--green)':tirPct>=50?'var(--amber)':'var(--red)'},{l:'HbA1c Est.',v:hba1c!=='—'?`${hba1c}%`:'—',s:'Anggaran',c:hba1c!=='—'&&parseFloat(hba1c)<7?'var(--green)':'var(--amber)'},{l:'Log 7 hari',v:w7.length,s:'Jumlah rekod',c:'var(--blue)'}].map(s=>`<div class="card stat-box" style="margin-bottom:0"><div style="font-size:var(--fxs);color:var(--txt2);font-weight:700;margin-bottom:5px;line-height:1.4">${s.l}</div><div class="stat-val" style="color:${s.c}">${s.v}</div><div class="stat-lbl">${s.s}</div></div>`).join('');
+  const lg=readings.filter(r=>r.type==='glucose').sort((a,b)=>b.ts-a.ts)[0];
+  const lb=readings.filter(r=>r.type==='bp').sort((a,b)=>b.ts-a.ts)[0];
+  document.getElementById('home-glucose').innerHTML=lg?(()=>{const cls=clsGlucose(lg.timing,lg.value),col=clsColorMap[cls];const vals=readings.filter(r=>r.type==='glucose').sort((a,b)=>a.ts-b.ts).slice(-10).map(r=>r.value);const bars=sparkBars(vals,20,(_v,_i,isLast)=>isLast?col:'var(--border)');return `<div class="card" style="background:${col}15;border:2px solid ${col}44"><div style="font-size:var(--fsm);color:${col};font-weight:800;margin-bottom:6px">🩸 GULA DARAH TERKINI</div><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><span style="font-size:44px;font-weight:800;color:var(--txt);line-height:1">${lg.value}</span><span style="font-size:var(--fsm);color:var(--txt2);margin-left:6px">mmol/L</span><div style="font-size:var(--fsm);color:var(--txt2);margin-top:6px;font-weight:500">${esc(TLABELS[lg.timing])} · ${fmtTime(lg.ts)}</div></div><div style="text-align:right">${badgeHtml(cls)}<div style="font-size:var(--fxs);color:var(--txt2);margin-top:6px;font-weight:600">Sasaran<br>${glucoseTarget(lg.timing)}</div></div></div>${vals.length>1?`<div style="margin-top:12px">${bars}</div>`:''}</div>`;})():'';
+  document.getElementById('home-bp').innerHTML=lb?(()=>{const cls=clsBP(lb.sys,lb.dia),col=clsColorMap[cls];const pc=clsPulse(lb.pulse),pcCol=pc==='ok'?'var(--green)':pc==='rendah'?'var(--blue)':'var(--amber)';const bv=readings.filter(r=>r.type==='bp').sort((a,b)=>a.ts-b.ts).slice(-10).map(r=>r.sys);const bars=sparkBars(bv,220,(_v,_i,isLast)=>isLast?col:'var(--border)');return `<div class="card" style="background:${col}15;border:2px solid ${col}44"><div style="font-size:var(--fsm);color:${col};font-weight:800;margin-bottom:6px">🫀 TEKANAN DARAH TERKINI</div><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><span style="font-size:38px;font-weight:800;color:var(--txt);line-height:1">${lb.sys}/${lb.dia}</span><span style="font-size:var(--fsm);color:var(--txt2);margin-left:6px">mmHg</span><div style="font-size:var(--fsm);color:var(--txt2);margin-top:6px">Nadi: <span style="color:${pcCol};font-weight:800">♥ ${lb.pulse||'—'} bpm</span> · ${fmtTime(lb.ts)}</div></div><div style="text-align:right">${badgeHtml(cls)}<div style="font-size:var(--fxs);color:var(--txt2);margin-top:6px;font-weight:600">Sasaran<br>&lt;130/80</div></div></div>${bv.length>1?`<div style="margin-top:12px">${bars}</div>`:''}</div>`;})():'';
+  if(g30.length){const ok30=g30.filter(r=>clsGlucose(r.timing,r.value)==='ok').length,low30=g30.filter(r=>clsGlucose(r.timing,r.value)==='rendah').length,hi30=g30.length-ok30-low30;document.getElementById('home-tir').innerHTML=`<div class="card"><div class="sec-hdr">Masa dalam Julat (TIR) — 30 bacaan terkini</div><div style="display:flex;gap:10px;margin-bottom:8px">${[{p:Math.round(ok30/g30.length*100),l:'Dalam Julat',c:'var(--green)'},{p:Math.round(hi30/g30.length*100),l:'Tinggi',c:'var(--red)'},{p:Math.round(low30/g30.length*100),l:'Rendah',c:'var(--blue)'}].map(x=>`<div style="flex:1;text-align:center"><div style="font-size:var(--fxl);font-weight:800;color:${x.c}">${x.p}%</div><div style="font-size:var(--fxs);color:var(--txt2);font-weight:600">${x.l}</div><div class="tir-bar" style="background:${x.c}33"><div class="tir-fill" style="width:${x.p}%;background:${x.c}"></div></div></div>`).join('')}</div><p style="font-size:var(--fxs);color:var(--txt2);text-align:center;font-weight:600">Sasaran TIR ≥70% (ADA 2024 / MOH CPG)</p></div>`;}
+  else document.getElementById('home-tir').innerHTML='';
+  setInsrType(insulinType,true);
+}
+function setInsrType(t,noSave){insulinType=t;['oral','premix','bb'].forEach(id=>{const el=document.getElementById('insr-'+id);if(el)el.classList.remove('sel');});const map={'oral':'insr-oral','premix':'insr-premix','basal-bolus':'insr-bb'};const el=document.getElementById(map[t]);if(el)el.classList.add('sel');const desc=document.getElementById('insr-desc');if(desc)desc.textContent={'oral':'Nasihat gaya hidup & pelarasan ubat oral. Tiada titration insulin.','premix':'Satu atau dua suntikan premix sehari (pagi & malam sebelum makan).','basal-bolus':'Insulin basal sekali sehari (pra-tidur) + insulin rapid sebelum setiap hidangan.'}[t]||'';if(!noSave)saveToStorage();}
+function exitApp(){saveNow();showToast('Data disimpan ✓');setTimeout(function(){var exited=false;try{if(navigator.app&&typeof navigator.app.exitApp==='function'){navigator.app.exitApp();exited=true;}}catch(e){}if(!exited){try{if(window.Android){var fns=['exitApp','closeApp','exit','finish'];for(var i=0;i<fns.length;i++){if(typeof window.Android[fns[i]]==='function'){window.Android[fns[i]]();exited=true;break;}}}}catch(e){}}if(!exited){try{window.close();exited=true;}catch(e){}}document.body.style.cssText='';document.body.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100dvh;background:#0A5C48;color:#fff;font-family:system-ui,sans-serif;gap:20px;padding:24px;text-align:center"><div style="font-size:72px">✅</div><div style="font-size:26px;font-weight:800">Data Disimpan</div><div style="font-size:18px;opacity:.85;line-height:1.7">Semua rekod anda telah disimpan.<br>Sila tutup aplikasi secara manual.</div></div>';},600);}
+
+// ── LOG ────────────────────────────────────────────────────────
+function renderLog(){
+  const nav=document.getElementById('home-log-nav');const body=document.getElementById('home-log-body');
+  if(!nav||!body)return;
+  if(showAdvice&&lastAdvice){nav.innerHTML='';body.innerHTML=adviceHtml(lastAdvice,'logAnother()');return;}
+  nav.innerHTML=`<div class="card" style="background:var(--green);border:none"><div class="sec-hdr" style="color:#fff;opacity:.85;margin-bottom:2px">HEALTHLOG PRO</div><div style="font-size:var(--flg);font-weight:800;color:#fff">➕ Log Bacaan</div><div style="font-size:var(--fsm);color:rgba(255,255,255,.9);margin-top:2px">Rekod bacaan baharu</div></div>`;
+  const tBtns=['glucose','bp'].map(t=>`<button class="btn btn-outline ${logType===t?'sel':''}" onclick="setLogType('${t}')">${t==='glucose'?'🩸 Gula Darah':'🫀 Tekanan Darah'}</button>`).join('');
+  let formHtml='';
+  if(logType==='glucose'){
+    const tBig=['pra-sarapan','pra-tengahari','pra-makan-malam','pra-tidur'].map(t=>`<button class="timing-btn ${logTiming===t?'sel':''}" onclick="setTiming('${t}')">${esc(TLABELS[t])}</button>`).join('');
+    const tSmall=['2j-selepas-sarapan','2j-selepas-tengahari','2j-selepas-makan-malam'].map(t=>`<button class="timing-btn ${logTiming===t?'sel':''}" style="font-size:var(--fsm)" onclick="setTiming('${t}')">${esc(TLABELS[t])}</button>`).join('');
+    formHtml=`<div class="card"><div class="inp-wrap"><div class="inp-lbl"><span>Gula darah</span><span class="inp-unit">mmol/L</span></div><input class="inp" type="text" id="inp-glucose" inputmode="decimal" placeholder="0.0" autocomplete="off" autocorrect="off"><p class="inp-hint">🎯 Sasaran: ${glucoseTarget(logTiming)}</p><p class="inp-err" id="err-glucose">Sila masukkan nilai yang sah (cth: 5.6)</p></div><div class="sec-hdr">Masa bacaan</div><div class="timing-grid">${tBig}</div><div class="timing-grid3">${tSmall}</div><div class="inp-wrap"><div class="inp-lbl"><span>Nota (pilihan)</span></div><input class="inp" style="font-size:var(--fmd);font-weight:500" type="text" id="inp-note" placeholder="cth: makan banyak, terlupa ubat..." autocomplete="off" autocorrect="off" autocapitalize="sentences"></div><button class="save-btn" onclick="doSave()">Simpan Bacaan</button></div>`;
+  }else{
+    formHtml=`<div class="card"><div class="grid2" style="margin-bottom:0"><div class="inp-wrap"><div class="inp-lbl"><span>Sistolik</span><span class="inp-unit">mmHg</span></div><input class="inp" type="text" id="inp-sys" inputmode="numeric" placeholder="120" autocomplete="off"><p class="inp-err" id="err-sys">Nilai tidak sah</p></div><div class="inp-wrap"><div class="inp-lbl"><span>Diastolik</span><span class="inp-unit">mmHg</span></div><input class="inp" type="text" id="inp-dia" inputmode="numeric" placeholder="80" autocomplete="off"><p class="inp-err" id="err-dia">Nilai tidak sah</p></div></div><div class="inp-wrap"><div class="inp-lbl"><span>Nadi</span><span class="inp-unit">bpm</span></div><input class="inp" type="text" id="inp-pulse" inputmode="numeric" placeholder="72" autocomplete="off"></div><div style="background:var(--okBg);border-radius:12px;padding:12px 16px;margin-bottom:16px"><span style="font-size:var(--fsm);color:var(--okText);font-weight:800">🎯 Sasaran: </span><span style="font-size:var(--fsm);color:var(--okText);font-weight:600">&lt;130/80 mmHg · Nadi 60–100 bpm</span></div><div class="inp-wrap"><div class="inp-lbl"><span>Nota (pilihan)</span></div><input class="inp" style="font-size:var(--fmd);font-weight:500" type="text" id="inp-note" placeholder="cth: selepas senaman, sakit kepala..." autocomplete="off" autocorrect="off" autocapitalize="sentences"></div><button class="save-btn" onclick="doSave()">Simpan Bacaan</button></div>`;
+  }
+  body.innerHTML=`<div class="btn-row">${tBtns}</div>${formHtml}`;
+  [['inp-glucose',true],['inp-sys',false],['inp-dia',false],['inp-pulse',false]].forEach(([id,dec])=>{const el=document.getElementById(id);if(!el)return;el.addEventListener('input',function(){let v=this.value.replace(dec?/[^\d.]/g:/[^\d]/g,'');if(dec){const p=v.split('.');if(p.length>2)v=p[0]+'.'+p.slice(1).join('');}if(this.value!==v)this.value=v;});});
+}
+function setLogType(t){logType=t;renderLog();}
+function setTiming(t){logTiming=t;renderLog();}
+function logAnother(){showAdvice=false;renderLog();}
+function doSave(){
+  let valid=true;
+  function showErr(id,show){const el=document.getElementById(id);if(el)el.style.display=show?'block':'none';}
+  const r={id:nextId++,ts:Date.now(),type:logType,note:''};
+  const noteEl=document.getElementById('inp-note');r.note=noteEl?noteEl.value.trim():'';
+  if(logType==='glucose'){const el=document.getElementById('inp-glucose');const v=parseFloat(el?el.value:'');if(!el||!el.value||isNaN(v)||v<=0||v>35){showErr('err-glucose',true);valid=false;}else{showErr('err-glucose',false);r.value=Math.round(v*10)/10;r.timing=logTiming;if(v>25)showToast('⚠️ Bacaan sangat tinggi — sahkan keputusan anda',3500);}}
+  else{const sEl=document.getElementById('inp-sys'),dEl=document.getElementById('inp-dia'),pEl=document.getElementById('inp-pulse');const sys=parseInt(sEl?sEl.value:''),dia=parseInt(dEl?dEl.value:'');if(!sys||isNaN(sys)||sys<50||sys>280){showErr('err-sys',true);valid=false;}else showErr('err-sys',false);if(!dia||isNaN(dia)||dia<30||dia>180){showErr('err-dia',true);valid=false;}else showErr('err-dia',false);if(!valid)return;if(sys<=dia){showToast('⚠️ Sistolik mestilah lebih tinggi daripada diastolik');return;}r.sys=sys;r.dia=dia;r.pulse=parseInt(pEl?pEl.value:'')||0;}
+  if(!valid)return;
+  readings.unshift(r);saveToStorage();lastAdvice=buildAdvice(r);showAdvice=true;renderLog();
+}
+
+// ── HISTORY ────────────────────────────────────────────────────
+function renderHistory(){
+  if(detailRecord){renderDetail();return;}
+  const histNav=document.getElementById('hist-nav');if(histNav)histNav.style.display='';
+  document.getElementById('hist-count').textContent=`${readings.length} rekod tersimpan`;
+  document.getElementById('hist-filter-row').innerHTML=[['semua','Semua'],['glucose','🩸 Gula'],['bp','🫀 TD']].map(([v,l])=>`<button class="btn btn-outline ${histFilter===v?'sel':''}" onclick="setHistFilter('${v}')">${l}</button>`).join('');
+  document.getElementById('hist-filter-row').style.display='';
+  const conf=document.getElementById('hist-confirm');
+  if(clearConfirm){conf.style.display='block';conf.innerHTML=`<div class="confirm-box"><p style="font-size:var(--fmd);font-weight:800;color:var(--danText);margin-bottom:8px">⚠️ Padam semua rekod?</p><p style="font-size:var(--fsm);color:var(--red);margin-bottom:14px;line-height:1.6">Semua ${readings.length} rekod akan dipadam secara kekal.</p><div style="display:flex;gap:10px"><button class="btn btn-green" onclick="doDeleteAll()">Ya, Padam Semua</button><button class="btn btn-outline" onclick="cancelClear()">Batal</button></div></div>`;}
+  else{conf.style.display='none';conf.innerHTML='';}
+  const filtered=readings.filter(r=>histFilter==='semua'||(histFilter==='glucose'&&r.type==='glucose')||(histFilter==='bp'&&r.type==='bp')).sort((a,b)=>b.ts-a.ts);
+  const grouped={};filtered.forEach(r=>{const k=new Date(r.ts).toDateString();if(!grouped[k])grouped[k]=[];grouped[k].push(r);});
+  let html='';
+  if(!filtered.length){html=`<div class="empty-state"><div class="empty-ico">📋</div><p style="font-size:var(--fmd);color:var(--txt2)">Tiada rekod lagi.<br>Log bacaan pertama anda!</p></div>`;}
+  else{for(const[,recs]of Object.entries(grouped)){html+=`<div class="card"><p style="font-size:var(--fsm);color:var(--txt2);font-weight:800;margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em">${fmtDateFull(recs[0].ts)}</p>`;recs.forEach(r=>{const cls=r.type==='glucose'?clsGlucose(r.timing,r.value):clsBP(r.sys,r.dia);const col=clsColorMap[cls]||'var(--green)';const val=r.type==='glucose'?`${r.value}`:`${r.sys}/${r.dia}`;const unit=r.type==='glucose'?'mmol/L':'mmHg';const pc=r.type==='bp'?clsPulse(r.pulse):null;const pcCol=pc==='ok'?'var(--green)':pc==='rendah'?'var(--blue)':'var(--amber)';html+=`<div class="hist-row" onclick="openDetail(${r.id})"><div class="hist-icon" style="background:${col}22">${r.type==='glucose'?'🩸':'🫀'}</div><div style="flex:1;min-width:0"><div style="font-size:var(--fsm);font-weight:700;color:var(--txt)">${r.type==='glucose'?esc(TLABELS[r.timing]):'Tekanan Darah'}</div><div style="font-size:var(--fxs);color:var(--txt2);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span style="font-weight:600">${fmtTime(r.ts)}</span>${r.type==='bp'&&r.pulse>0?`<span style="color:${pcCol};font-weight:700">♥ ${r.pulse}</span>`:''}${r.note?`<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px">${esc(r.note)}</span>`:''}</div></div><div style="text-align:right;flex-shrink:0;margin-right:10px"><div style="font-size:var(--fmd);font-weight:800;color:${col}">${val}</div><div style="font-size:var(--fxs);color:var(--txt2);font-weight:600">${unit}</div></div><span style="color:var(--txt3);font-size:24px">›</span></div>`;});html+='</div>';}}
+  document.getElementById('hist-list').innerHTML=html;
+}
+function setHistFilter(f){histFilter=f;renderHistory();}
+function showClearConfirm(){clearConfirm=true;renderHistory();}
+function cancelClear(){clearConfirm=false;renderHistory();}
+function doDeleteAll(){readings=[];saveNow();clearConfirm=false;renderHistory();renderHome();showToast('Semua rekod dipadam');}
+function openDetail(id){detailRecord=readings.find(r=>r.id===id);if(!detailRecord)return;renderDetail();}
+function renderDetail(){
+  const r=detailRecord;const cls=r.type==='glucose'?clsGlucose(r.timing,r.value):clsBP(r.sys,r.dia);const col=clsColorMap[cls]||'var(--green)';const adv=buildAdvice(r);
+  const pc=r.type==='bp'?clsPulse(r.pulse):null;const pcCol=pc==='ok'?'var(--green)':pc==='rendah'?'var(--blue)':'var(--amber)';const pcLbl={ok:'Normal',rendah:'Perlahan',tinggi:'Laju'}[pc]||'';
+  document.getElementById('hist-nav').style.display='none';document.getElementById('hist-filter-row').style.display='none';document.getElementById('hist-confirm').style.display='none';
+  document.getElementById('hist-list').innerHTML=`<div style="background:${col};padding:14px 18px 20px"><button class="detail-back" onclick="closeDetail()">← Kembali</button><h2 style="font-size:var(--fxl);font-weight:800;color:#fff">${r.type==='glucose'?esc(TLABELS[r.timing]):'Tekanan Darah'}</h2><p style="font-size:var(--fsm);color:rgba(255,255,255,.85);margin-top:4px">${fmtDateFull(r.ts)} · ${fmtTime(r.ts)}</p></div><div style="padding:14px"><div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px"><div><div style="font-size:48px;font-weight:800;color:var(--txt);line-height:1">${r.type==='glucose'?r.value:`${r.sys}/${r.dia}`}</div><div style="font-size:var(--fsm);color:var(--txt2);margin-top:6px;font-weight:600">${r.type==='glucose'?'mmol/L':'mmHg'}</div></div>${badgeHtml(cls)}</div>${r.type==='bp'&&r.pulse>0?`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:var(--fsm);color:var(--txt2);font-weight:600">Nadi:</span><span style="font-size:var(--fmd);font-weight:800;color:${pcCol}">♥ ${r.pulse} bpm</span>${pc?`<span class="badge" style="background:${pc==='ok'?'var(--okBg)':pc==='rendah'?'var(--lowBg)':'#FFF8EC'};color:${pc==='ok'?'var(--okText)':pc==='rendah'?'var(--lowText)':'var(--amber)'}">${pcLbl}</span>`:''}</div>`:''} ${r.note?`<div style="background:var(--bg);border-radius:10px;padding:10px 14px;font-size:var(--fmd);color:var(--txt2)">${esc(r.note)}</div>`:''}</div><div class="adv-box" style="background:${adv.acBg};border-color:${adv.acBd}"><p style="font-size:var(--fmd);font-weight:800;color:${adv.acBd};margin-bottom:8px">${esc(adv.acTitle)}</p><p style="font-size:var(--fsm);color:${adv.acBd};line-height:1.7">${esc(adv.acBody)}</p></div>${adv.tNote?`<div class="tit-box"><p style="font-size:var(--fxs);font-weight:800;color:var(--purText);margin-bottom:6px;text-transform:uppercase">📋 Rujukan Klinikal</p><p style="font-size:var(--fsm);color:var(--purText);line-height:1.8">${bold(esc(adv.tNote))}</p></div>`:''}<button class="btn btn-red" style="width:100%;margin-top:6px;font-size:var(--fsm)" onclick="deleteRecord(${r.id})">🗑️ Padam bacaan ini</button></div>`;
+}
+function closeDetail(){detailRecord=null;document.getElementById('hist-nav').style.display='';document.getElementById('hist-filter-row').style.display='';renderHistory();}
+function deleteRecord(id){readings=readings.filter(r=>r.id!==id);saveNow();closeDetail();showToast('Bacaan dipadam');}
+
+// ── STATISTICS ─────────────────────────────────────────────────
+function renderStats(){
+  document.getElementById('stats-range-row').innerHTML=[7,14,30].map(n=>`<button class="range-btn ${statsRange===n?'sel':''}" onclick="setStatsRange(${n})">${n} Hari</button>`).join('');
+  const cutoff=Date.now()-statsRange*86400000;
+  const gData=readings.filter(r=>r.type==='glucose'&&r.ts>cutoff).sort((a,b)=>a.ts-b.ts);
+  const bData=readings.filter(r=>r.type==='bp'&&r.ts>cutoff).sort((a,b)=>a.ts-b.ts);
+  const gVals=gData.map(r=>r.value);
+  const gAvg=gVals.length?(gVals.reduce((a,b)=>a+b,0)/gVals.length).toFixed(1):'-';
+  const gMax=gVals.length?Math.max(...gVals).toFixed(1):'-';
+  const gMin=gVals.length?Math.min(...gVals).toFixed(1):'-';
+  const gOkPct=gVals.length?Math.round(gData.filter(r=>clsGlucose(r.timing,r.value)==='ok').length/gData.length*100):0;
+  const gLowN=gVals.length?gData.filter(r=>clsGlucose(r.timing,r.value)==='rendah').length:0;
+  const hba1c=gAvg!=='-'?((parseFloat(gAvg)+2.59)/1.59).toFixed(1):null;
+  const bAvgSys=bData.length?Math.round(bData.reduce((a,b)=>a+b.sys,0)/bData.length):'-';
+  const bAvgDia=bData.length?Math.round(bData.reduce((a,b)=>a+b.dia,0)/bData.length):'-';
+  const bHighN=bData.filter(r=>!['ok','rendah'].includes(clsBP(r.sys,r.dia))).length;
+  const byT={};TORDER.forEach(t=>{const arr=gData.filter(r=>r.timing===t);if(arr.length)byT[t]={avg:(arr.reduce((a,b)=>a+b.value,0)/arr.length).toFixed(1),count:arr.length,low:arr.filter(r=>clsGlucose(t,r.value)==='rendah').length};});
+  let html='';
+  if(gVals.length){
+    const bars=sparkBars(gData.slice(-14).map(r=>r.value),20,(v,i,isLast)=>{const col=clsColorMap[clsGlucose(gData[Math.max(0,gData.length-14)+i]?.timing||'pra-sarapan',v)]||'var(--green)';return isLast?col:col+'88';});
+    html+=`<div class="card"><div class="sec-hdr">🩸 Gula Darah — ${statsRange} hari</div><div class="grid2" style="margin-bottom:14px">${[{l:'Purata',v:gAvg,u:'mmol/L',c:'var(--green)'},{l:'Tertinggi',v:gMax,u:'mmol/L',c:'var(--red)'},{l:'Terendah',v:gMin,u:'mmol/L',c:'var(--blue)'},{l:'Dalam Julat',v:`${gOkPct}%`,u:'TIR',c:gOkPct>=70?'var(--green)':'var(--amber)'}].map(s=>`<div class="stat-box"><div style="font-size:var(--fxs);color:var(--txt2);font-weight:700;margin-bottom:5px">${s.l}</div><div class="stat-val" style="color:${s.c}">${s.v}</div><div class="stat-lbl">${s.u}</div></div>`).join('')}</div>${gLowN>0?`<div style="background:var(--lowBg);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:var(--fsm);color:var(--lowText);font-weight:700">⚠️ ${gLowN} episod hipoglisemia dikesan. Semak dengan doktor.</div>`:''}${hba1c?`<div style="background:var(--purBg);border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:var(--fsm);color:var(--purText);font-weight:800">HbA1c Anggaran</div><div style="font-size:var(--fxs);color:var(--purText);opacity:.8">Formula Nathan et al.</div></div><div style="font-size:var(--f2xl);font-weight:800;color:var(--purple)">${hba1c}%</div></div>`:''}<div style="font-size:var(--fsm);font-weight:700;color:var(--txt2);margin-bottom:10px">Trend 14 bacaan terkini</div>${bars}${gData.length?`<div class="bar-lbl"><span>${fmtDateShort(gData[Math.max(0,gData.length-14)].ts)}</span><span>Hari ini</span></div>`:''}</div>`;
+  }
+  if(Object.keys(byT).length){html+=`<div class="card"><div class="sec-hdr">Purata mengikut waktu</div>${TORDER.filter(t=>byT[t]).map(t=>{const d=byT[t],cls=clsGlucose(t,parseFloat(d.avg)),col=clsColorMap[cls]||'var(--green)';const tgt=t==='pra-sarapan'?7.0:t==='pra-tidur'?8.0:8.5;const pct=Math.min(100,Math.round(parseFloat(d.avg)/tgt*100));return `<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:var(--fsm);color:var(--txt2);font-weight:600">${esc(TLABELS[t])}</span><div style="display:flex;align-items:center;gap:10px">${d.low>0?`<span style="font-size:var(--fxs);color:var(--blue);font-weight:700">⚠️ ${d.low} hipo</span>`:''}<span style="font-size:var(--fxs);color:var(--txt2);font-weight:600">${d.count}x</span><span style="font-size:var(--fmd);font-weight:800;color:${col}">${d.avg}</span></div></div><div style="height:8px;border-radius:4px;background:var(--border)"><div style="height:100%;width:${pct}%;background:${col};border-radius:4px"></div></div></div>`;}).join('')}</div>`;}
+  if(bData.length){const bars=sparkBars(bData.slice(-14).map(r=>r.sys),220,(v,i,isLast)=>{const col=clsColorMap[clsBP(bData[Math.max(0,bData.length-14)+i]?.sys||v,bData[Math.max(0,bData.length-14)+i]?.dia||60)]||'var(--green)';return isLast?col:col+'88';});html+=`<div class="card"><div class="sec-hdr">🫀 Tekanan Darah — ${statsRange} hari</div><div class="grid3" style="margin-bottom:14px">${[{l:'Purata Sistolik',v:bAvgSys},{l:'Purata Diastolik',v:bAvgDia},{l:'Bacaan Tinggi',v:bHighN,c:'var(--red)'}].map(s=>`<div class="stat-box"><div style="font-size:var(--fxs);color:var(--txt2);font-weight:700;margin-bottom:5px;line-height:1.4">${s.l}</div><div class="stat-val" style="font-size:var(--fxl);color:${s.c||'var(--txt)'}"> ${s.v}</div></div>`).join('')}</div>${bars}${bData.length?`<div class="bar-lbl"><span>${fmtDateShort(bData[Math.max(0,bData.length-14)].ts)}</span><span>Hari ini</span></div>`:''}</div>`;}
+  if(!gVals.length&&!bData.length)html=`<div class="empty-state"><div class="empty-ico">📈</div><p style="font-size:var(--fmd);color:var(--txt2)">Tiada data untuk tempoh ini.<br>Log bacaan untuk lihat statistik.</p></div>`;
+  document.getElementById('stats-content').innerHTML=html;
+}
+function setStatsRange(n){statsRange=n;renderStats();}
+
+// ── CALENDAR ────────────────────────────────────────────────────
+function renderCalendar(){
+  document.getElementById('cal-tab-row').innerHTML=[['glucose','🩸 Gula'],['bp','🫀 Tekanan Darah']].map(([v,l])=>`<button class="btn btn-outline ${calTab===v?'sel':''}" onclick="setCalTab('${v}')">${l}</button>`).join('');
+  document.getElementById('cal-month-label').textContent=`${MONTHS_FULL[calMonth]} ${calYear}`;
+  document.getElementById('cal-day-headers').innerHTML=HARI.map(h=>`<div class="month-day-hdr">${h}</div>`).join('');
+  const days=getDaysInMonth(calYear,calMonth),first=getFirstDayOfMonth(calYear,calMonth);
+  let cells=Array(first).fill('<div></div>').join('');
+  for(let d=1;d<=days;d++){const date=new Date(calYear,calMonth,d);const pc=pillCls(date);const col=pc==='ok'?'var(--green)':pc==='rendah'?'var(--blue)':pc==='tinggi'?'var(--red)':'transparent';const isSel=calSelDate&&calSelDate.getDate()===d&&calSelDate.getMonth()===calMonth&&calSelDate.getFullYear()===calYear;const hasData=pc!=='kosong';const bg=isSel?col:hasData?col+'22':'var(--bg)';const tc=isSel?'#fff':hasData?col:'var(--txt3)';const bdr=isSel?col:hasData?col:'transparent';const dg=getDayG(date).length,db=getDayBP(date).length;cells+=`<div class="month-day" onclick="setCalDay(${d})"><div class="month-pill" style="background:${bg};color:${tc};border-color:${bdr}">${d}</div><div class="month-dots">${dg?`<div class="cal-dot" style="background:var(--green)"></div>`:''}${db?`<div class="cal-dot" style="background:var(--blue)"></div>`:''}</div></div>`;}
+  document.getElementById('cal-grid').innerHTML=cells;
+  const dc=document.getElementById('cal-day-card');
+  if(!calSelDate){dc.innerHTML=`<p style="font-size:var(--fmd);color:var(--txt2);text-align:center;padding:20px 0">Ketik tarikh untuk lihat bacaan</p>`;return;}
+  const selG=getDayG(calSelDate),selBP=getDayBP(calSelDate);
+  let dayHtml=`<p style="font-size:var(--fsm);font-weight:800;color:var(--txt);margin-bottom:14px">${fmtDateFull(calSelDate)}</p>`;
+  if(calTab==='glucose'){
+    if(!selG.length){dayHtml+=`<div style="text-align:center;padding:24px 0"><div style="font-size:32px;margin-bottom:8px">📭</div><p style="font-size:var(--fmd);color:var(--txt2)">Tiada bacaan gula pada hari ini</p></div>`;}
+    else{dayHtml+=`<table><thead><tr><th>Waktu</th><th>mmol/L</th><th>Status</th></tr></thead><tbody>`;TORDER.forEach(t=>{const r=selG.find(x=>x.timing===t);if(!r)return;const cls=clsGlucose(t,r.value),col=clsColorMap[cls]||'var(--green)';dayHtml+=`<tr style="background:${cls!=='ok'?col+'11':'transparent'};cursor:pointer" onclick="openDetail(${r.id})"><td style="font-size:var(--fxs);color:var(--txt2);font-weight:600">${esc(TLABELS[t])}</td><td style="font-size:var(--fmd);font-weight:800;color:${col}">${r.value}</td><td>${badgeHtml(cls)}</td></tr>`;});dayHtml+=`</tbody></table>`;const hypos=selG.filter(r=>clsGlucose(r.timing,r.value)==='rendah');if(hypos.length)dayHtml+=`<div style="background:var(--lowBg);border-radius:10px;padding:10px 14px;margin-top:12px;font-size:var(--fsm);color:var(--lowText);font-weight:700">⚠️ ${hypos.length} episod hipoglisemia pada hari ini.</div>`;}
+  }else{
+    if(!selBP.length){dayHtml+=`<div style="text-align:center;padding:24px 0"><div style="font-size:32px;margin-bottom:8px">📭</div><p style="font-size:var(--fmd);color:var(--txt2)">Tiada bacaan TD pada hari ini</p></div>`;}
+    else selBP.forEach(r=>{const cls=clsBP(r.sys,r.dia),col=clsColorMap[cls]||'var(--green)';const pc=clsPulse(r.pulse),pcCol=pc==='ok'?'var(--green)':pc==='rendah'?'var(--blue)':'var(--amber)';dayHtml+=`<div onclick="openDetail(${r.id})" style="display:flex;justify-content:space-between;align-items:center;padding:12px 10px;margin-bottom:6px;border-radius:10px;background:${col}0A;cursor:pointer"><div><div style="font-size:var(--fmd);font-weight:800;color:${col}">${r.sys}/${r.dia} <span style="font-size:var(--fsm);font-weight:600;color:var(--txt2)">mmHg</span></div><div style="font-size:var(--fxs);color:var(--txt2);font-weight:600">${fmtTime(r.ts)}${r.pulse?` · <span style="color:${pcCol}">♥ ${r.pulse} bpm</span>`:''}${r.note?` · ${esc(r.note)}`:''}</div></div>${badgeHtml(cls)}</div>`;});
+  }
+  dc.innerHTML=dayHtml;
+}
+function setCalTab(t){calTab=t;renderCalendar();}
+function setCalDay(d){calSelDate=new Date(calYear,calMonth,d);renderCalendar();}
+function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}calSelDate=null;renderCalendar();}
+function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}calSelDate=null;renderCalendar();}
+
+// ── LIFESTYLE ──────────────────────────────────────────────────
+const LD={
+  exercise:[
+    {icon:'🏃',tag:'Aerobik',tc:'var(--dgreen)',tb:'var(--okBg)',title:'Senaman Aerobik untuk Diabetis & HTN',body:'Sasarkan <strong>150 minit/minggu</strong> senaman aerobik intensiti sederhana (berjalan pantas, berbasikal, berenang). Sebarkan ≥5 hari seminggu. Jangan berehat >2 hari berturut-turut.',extra:'Semak gula sebelum senaman. Jika < 7.0 mmol/L — makan snek dahulu. Jika > 14.0 mmol/L — tangguhkan.'},
+    {icon:'💪',tag:'Rintangan',tc:'var(--purText)',tb:'var(--purBg)',title:'Latihan Kekuatan',body:'Lakukan <strong>2–3 sesi/minggu</strong>: angkat berat ringan, tali getah, atau berat badan (squat, push-up, lunges). Mulakan perlahan. Meningkatkan sensitiviti insulin dan jisim otot.',extra:'Elakkan menahan nafas semasa angkat berat jika ada masalah kardiovaskular.'},
+    {icon:'🚶',tag:'Gaya Hidup',tc:'var(--blue)',tb:'var(--lowBg)',title:'Aktiviti Harian & Kurangkan Duduk',body:'Bangkit dan bergerak <strong>setiap 30 minit</strong>. Parkir kereta jauh, naik tangga, berjalan semasa telefon. Sasaran: 7,000–10,000 langkah/hari.',extra:'Berjalan 10 minit selepas makan terbukti menurunkan gula prandial.'},
+    {icon:'⚠️',tag:'Kewaspadaan',tc:'var(--danText)',tb:'var(--danBg)',title:'Keselamatan Semasa Bersenam',body:'HENTIKAN jika: gula < 4.0 atau > 14.0 mmol/L, sakit dada, sesak nafas, pening teruk. Gunakan kasut yang sesuai untuk elakkan luka kaki.',extra:'Bawa kad kecemasan diabetes dan glukosa pantas semasa bersenam.'},
+  ],
+  diet:[
+    {icon:'🥗',tag:'Indeks Glisemik',tc:'var(--dgreen)',tb:'var(--okBg)',title:'Pilih Karbohidrat GI Rendah',body:'Pilih makanan <strong>GI rendah (< 55)</strong>: beras perang, oat, ubi keledek, kekacang, roti bijirin penuh. Elakkan GI tinggi: nasi putih (GI 72), roti putih (GI 75), minuman bergula.',extra:'Masak nasi dan sejukkan semalaman — GI berkurang kerana kandungan resistant starch meningkat.'},
+    {icon:'🐟',tag:'Protein',tc:'var(--blue)',tb:'var(--lowBg)',title:'Protein Sihat',body:'Pilih protein tanpa lemak: ikan berlemak (kembung, sardin — 2-3 kali/minggu), ayam tanpa kulit, telur (≤7/minggu), tauhu, tempe.',extra:'Omega-3 dalam ikan berlemak melindungi kardiovaskular.'},
+    {icon:'🧂',tag:'Garam',tc:'var(--amber)',tb:'#FFF8EC',title:'Kurangkan Garam — Penting untuk HTN',body:'Hadkan natrium kepada <strong>< 2,000 mg/hari</strong>. Elakkan: kicap, sos tiram, belacan, makanan dalam tin, keropok, fast food.',extra:'Setiap pengurangan 1g garam/hari menurunkan TD sistolik ~2 mmHg.'},
+    {icon:'🫒',tag:'Lemak Sihat',tc:'var(--dgreen)',tb:'var(--okBg)',title:'Lemak Sihat vs Berbahaya',body:'PILIH: minyak zaitun, alpukat, kacang-kacangan tanpa garam. ELAKKAN: lemak trans (margerin keras, pastri, makanan goreng komersial).',extra:'Diet Mediterranean mengurangkan risiko kardiovaskular 30%.'},
+    {icon:'💧',tag:'Hidrasi',tc:'var(--blue)',tb:'var(--lowBg)',title:'Kepentingan Air Mencukupi',body:'Minum <strong>8–10 gelas air kosong/hari</strong>. ELAKKAN: minuman bergula, jus kotak, teh tarik berlebihan.',extra:'Dehidrasi ringan boleh meningkatkan paras gula darah.'},
+    {icon:'🍽️',tag:'Corak Makan',tc:'var(--purText)',tb:'var(--purBg)',title:'Jadual Makan yang Sihat',body:'Makan <strong>3 hidangan utama + 1–2 snek kecil</strong> pada waktu konsisten. Jangan langkau sarapan. Elakkan makan lewat malam.',extra:'Makan sayuran dahulu, kemudian protein, akhir karbohidrat — mengurangkan spike gula.'},
+  ],
+};
+const EXCHANGE_GROUPS=[
+  {icon:'🍚',name:'Karbohidrat / Bijirin',color:'var(--amber)',bg:'#FFF8EC',carb:15,cal:80,protein:3,fat:0,note:'1 pertukaran = 15g karbohidrat',items:[{food:'Nasi putih / perang',portion:'3 sudu makan (½ cawan)'},{food:'Oat masak',portion:'½ cawan (125ml)'},{food:'Roti bijirin penuh',portion:'1 keping (30g)'},{food:'Mee / bihun / kuay teow',portion:'½ cawan masak'},{food:'Ubi keledek',portion:'½ ubi sederhana (75g)'},{food:'Jagung',portion:'½ tongkol'},{food:'Biskut cream crackers',portion:'3 keping'}]},
+  {icon:'🥬',name:'Sayuran',color:'var(--dgreen)',bg:'var(--okBg)',carb:5,cal:25,protein:2,fat:0,note:'1 pertukaran = 5g karbohidrat',items:[{food:'Bayam, kangkung, sawi',portion:'1 cawan mentah / ½ cawan masak'},{food:'Timun, tomato, kobis',portion:'1 cawan mentah'},{food:'Lobak merah / labu',portion:'½ cawan masak'},{food:'Brokoli / kembang kol',portion:'1 cawan mentah'},{food:'Kacang bendi / panjang',portion:'½ cawan masak'}]},
+  {icon:'🍎',name:'Buah-buahan',color:'var(--red)',bg:'var(--danBg)',carb:15,cal:60,protein:0,fat:0,note:'1 pertukaran = 15g karbohidrat',items:[{food:'Epal / pear sederhana',portion:'1 biji kecil (115g)'},{food:'Pisang',portion:'½ biji sederhana (60g)'},{food:'Tembikai',portion:'1¼ cawan potong'},{food:'Betik',portion:'¾ cawan potong'},{food:'Jambu batu',portion:'1 biji sederhana (90g)'},{food:'Oren',portion:'1 biji sederhana (130g)'},{food:'Mangga',portion:'¾ cawan potong'}]},
+  {icon:'🥛',name:'Susu & Tenusu',color:'var(--blue)',bg:'var(--lowBg)',carb:12,cal:100,protein:8,fat:3,note:'1 pertukaran = 12g karbohidrat',items:[{food:'Susu rendah lemak',portion:'1 cawan (240ml)'},{food:'Susu skim',portion:'1 cawan (240ml)'},{food:'Yogurt plain tanpa gula',portion:'¾ cawan (180g)'},{food:'Susu soya tanpa gula',portion:'1 cawan (240ml)'}]},
+  {icon:'🐟',name:'Protein (Daging/Ikan/Telur)',color:'var(--purText)',bg:'var(--purBg)',carb:0,cal:75,protein:7,fat:5,note:'1 pertukaran = 0g karbohidrat',items:[{food:'Ikan (tidak digoreng)',portion:'30g (1 oz)'},{food:'Ayam tanpa kulit',portion:'30g (1 oz)'},{food:'Telur',portion:'1 biji'},{food:'Tauhu keras',portion:'90g'},{food:'Tempe',portion:'45g'},{food:'Udang / sotong',portion:'45g'}]},
+  {icon:'🫘',name:'Kekacang',color:'var(--dgreen)',bg:'var(--okBg)',carb:15,cal:110,protein:7,fat:1,note:'1 pertukaran = 15g karbohidrat + 7g protein',items:[{food:'Kacang merah / hitam',portion:'½ cawan masak'},{food:'Lentil / dal',portion:'½ cawan masak'},{food:'Kacang chickpea',portion:'½ cawan'},{food:'Kacang hijau',portion:'½ cawan masak'}]},
+  {icon:'🫒',name:'Lemak',color:'var(--txt2)',bg:'var(--bg)',carb:0,cal:45,protein:0,fat:5,note:'Hadkan 3–5 pertukaran/hari',items:[{food:'Minyak zaitun / masak',portion:'1 sudu teh (5ml)'},{food:'Alpukat',portion:'2 sudu makan (30g)'},{food:'Kacang tanah / badam',portion:'6 biji'},{food:'Santan (hadkan)',portion:'1 sudu makan'}]},
+];
+const CARB_TARGETS=[
+  {label:'Wanita aktif / BMI normal',carb:'45–60g',exchange:'3–4'},
+  {label:'Lelaki aktif / BMI normal',carb:'60–75g',exchange:'4–5'},
+  {label:'Sasaran umum T2DM (MOH)',carb:'45–60g',exchange:'3–4'},
+  {label:'Kawalan ketat (gula tinggi)',carb:'30–45g',exchange:'2–3'},
+];
+function renderLifestyle(){document.getElementById('lifestyle-tabs').innerHTML=[['exercise','🏃 Senaman'],['diet','🥗 Diet'],['exchange','🔄 Pertukaran']].map(([t,l])=>`<button class="edtab-btn ${edTab===t?'sel':''}" onclick="setEdTab('${t}')">${l}</button>`).join('');renderEdContent();}
+function setEdTab(t){edTab=t;document.querySelectorAll('.edtab-btn').forEach(b=>b.classList.remove('sel'));const btns=document.querySelectorAll('.edtab-btn');const idx=['exercise','diet','exchange'].indexOf(t);if(btns[idx])btns[idx].classList.add('sel');renderEdContent();}
+function renderEdContent(){if(edTab==='exchange'){renderExchangeDiet();return;}document.getElementById('lifestyle-content').innerHTML=(LD[edTab]||[]).map(d=>`<div class="tip-card"><div class="tip-icon">${d.icon}</div><span class="tip-tag" style="background:${d.tb};color:${d.tc}">${d.tag}</span><div class="tip-title">${d.title}</div><div class="tip-body">${d.body}</div>${d.extra?`<div style="margin-top:12px;padding:10px 14px;background:var(--bg);border-radius:10px;font-size:var(--fsm);color:var(--txt2);line-height:1.8;border-left:4px solid var(--green)">💡 ${d.extra}</div>`:''}</div>`).join('');}
+function renderExchangeDiet(){
+  document.getElementById('lifestyle-content').innerHTML=`
+  <div class="tip-card" style="background:var(--purBg);border-color:var(--purple)">
+    <div class="tip-icon">🔄</div>
+    <span class="tip-tag" style="background:var(--purple);color:#fff">Panduan Diet</span>
+    <div class="tip-title">Diet Pertukaran & Pengiraan Karbohidrat</div>
+    <div class="tip-body">Sistem <strong>Diet Pertukaran Diabetis</strong> membolehkan anda menukar makanan dalam kumpulan yang sama tanpa menjejaskan kawalan gula darah.</div>
+    <div style="margin-top:12px;padding:10px 14px;background:var(--bg);border-radius:10px;font-size:var(--fsm);color:var(--txt2);line-height:1.8;border-left:4px solid var(--purple)">💡 Sasarkan <strong>45–60g karbohidrat setiap hidangan utama</strong> (MOH CPG T2DM Ed.6).</div>
+  </div>
+  <div class="card">
+    <div class="sec-hdr">🎯 Sasaran Karbohidrat Harian</div>
+    <table><thead><tr><th>Pesakit</th><th>Karb/Hidangan</th><th>Pertukaran</th></tr></thead><tbody>
+    ${CARB_TARGETS.map(r=>`<tr><td style="font-weight:700">${r.label}</td><td style="color:var(--green);font-weight:800;text-align:center">${r.carb}g</td><td style="color:var(--purText);font-weight:800;text-align:center">${r.exchange}</td></tr>`).join('')}
+    </tbody></table>
+  </div>
+  <div class="card">
+    <div class="sec-hdr">📊 Kumpulan Pertukaran Makanan</div>
+    ${EXCHANGE_GROUPS.map((g,i)=>`
+    <div style="border:2px solid ${g.color};border-radius:14px;margin-bottom:12px;overflow:hidden">
+      <div onclick="toggleExGroup(${i})" style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:${g.bg};cursor:pointer">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:24px">${g.icon}</span>
+          <div><div style="font-size:var(--fsm);font-weight:800;color:${g.color}">${g.name}</div><div style="font-size:var(--fxs);color:var(--txt2);margin-top:2px;font-weight:600">${g.note}</div></div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;margin-left:10px"><div style="font-size:var(--fxl);font-weight:800;color:${g.color}">${g.carb}g</div><div style="font-size:var(--fxs);color:var(--txt2);font-weight:600">karb</div></div>
+      </div>
+      <div id="exg-${i}" style="display:none;padding:0 16px 14px">
+        <div style="display:flex;gap:10px;padding:12px 0 10px;border-bottom:1px solid var(--border);margin-bottom:10px">
+          ${[{v:g.cal,l:'kal'},{v:g.carb+'g',l:'karb'},{v:g.protein+'g',l:'protein'},{v:g.fat+'g',l:'lemak'}].map(x=>`<div style="text-align:center;flex:1"><div style="font-size:var(--fsm);font-weight:800;color:var(--txt)">${x.v}</div><div style="font-size:var(--fxs);color:var(--txt2);font-weight:600">${x.l}</div></div>`).join('')}
+        </div>
+        <table><thead><tr><th>Makanan</th><th>Porsi (1 Pertukaran)</th></tr></thead><tbody>${g.items.map(it=>`<tr><td style="font-weight:700;color:var(--txt)">${it.food}</td><td style="color:var(--txt2);font-weight:500">${it.portion}</td></tr>`).join('')}</tbody></table>
+      </div>
+    </div>`).join('')}
+  </div>
+  <div class="card">
+    <div class="sec-hdr">🍽️ Kaedah Pinggan Diabetes</div>
+    <div style="display:flex;justify-content:center;margin-bottom:16px">
+      <div style="width:190px;height:190px;border-radius:50%;border:4px solid var(--border);position:relative;overflow:hidden;flex-shrink:0">
+        <div style="position:absolute;top:0;left:0;width:50%;height:100%;background:#C8E6C9"></div>
+        <div style="position:absolute;top:0;right:0;width:50%;height:50%;background:#FFF9C4"></div>
+        <div style="position:absolute;bottom:0;right:0;width:50%;height:50%;background:#BBDEFB"></div>
+        <div style="position:absolute;top:50%;left:0;right:0;height:3px;background:#fff"></div>
+        <div style="position:absolute;top:0;bottom:0;left:50%;width:3px;background:#fff"></div>
+        <div style="position:absolute;top:44%;left:8%;font-size:11px;font-weight:800;color:#1B5E20;text-align:center;width:42%">½<br>Sayuran</div>
+        <div style="position:absolute;top:18%;right:1%;font-size:11px;font-weight:800;color:#827717;text-align:center;width:46%">¼<br>Karbohidrat</div>
+        <div style="position:absolute;bottom:18%;right:1%;font-size:11px;font-weight:800;color:#0D47A1;text-align:center;width:46%">¼<br>Protein</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;gap:12px;font-size:var(--fsm)"><div style="width:16px;height:16px;border-radius:4px;background:#C8E6C9;flex-shrink:0"></div><span><strong>½ pinggan — Sayuran</strong> tidak berkanji (bayam, kangkung, kobis, brokoli, timun)</span></div>
+      <div style="display:flex;align-items:center;gap:12px;font-size:var(--fsm)"><div style="width:16px;height:16px;border-radius:4px;background:#FFF9C4;flex-shrink:0"></div><span><strong>¼ pinggan — Karbohidrat</strong> kompleks (nasi perang, ubi, oat)</span></div>
+      <div style="display:flex;align-items:center;gap:12px;font-size:var(--fsm)"><div style="width:16px;height:16px;border-radius:4px;background:#BBDEFB;flex-shrink:0"></div><span><strong>¼ pinggan — Protein</strong> tanpa lemak (ikan, ayam, tauhu, telur)</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="sec-hdr">📋 Indeks Glisemik (GI) Rujukan</div>
+    <table><thead><tr><th>Kategori</th><th>GI</th><th>Contoh</th></tr></thead><tbody>
+      <tr><td><span style="color:var(--okText);font-weight:800">🟢 Rendah</span></td><td style="color:var(--okText);font-weight:800;text-align:center">&lt;55</td><td style="color:var(--txt2)">Oat, nasi perang, ubi keledek</td></tr>
+      <tr><td><span style="color:var(--amber);font-weight:800">🟡 Sederhana</span></td><td style="color:var(--amber);font-weight:800;text-align:center">55–69</td><td style="color:var(--txt2)">Nasi basmati, roti bijirin penuh</td></tr>
+      <tr><td><span style="color:var(--danText);font-weight:800">🔴 Tinggi</span></td><td style="color:var(--danText);font-weight:800;text-align:center">≥70</td><td style="color:var(--txt2)">Nasi putih, roti putih, minuman bergula</td></tr>
+    </tbody></table>
+  </div>`;
+}
+function toggleExGroup(i){const el=document.getElementById('exg-'+i);if(!el)return;el.style.display=el.style.display==='none'?'block':'none';}
+
+// ── INIT ──────────────────────────────────────────────────────
+(function init(){
+  loadFromStorage();
+  document.querySelectorAll('[id^="tabbar-"]').forEach(el=>{el.innerHTML=tabbarHtml('home');});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveNow();});
+  window.addEventListener('pagehide',saveNow);
+  window.addEventListener('beforeunload',saveNow);
+  document.addEventListener('deviceready',function(){document.addEventListener('backbutton',handleBackButton,false);},false);
+  history.pushState({app:true},'');
+  window.addEventListener('popstate',function(){handleBackButton();history.pushState({app:true},'');});
+  document.addEventListener('touchstart',function(e){if(!e.target.closest('input,textarea,select')){const active=document.activeElement;if(active&&(active.tagName==='INPUT'||active.tagName==='TEXTAREA'))active.blur();}},{passive:true});
+  document.addEventListener('touchmove',function(e){let el=e.target;while(el&&el!==document.body){if(el.classList&&(el.classList.contains('body')||el.classList.contains('ai-messages')||el.id==='ai-insights-view'||el.id==='ai-summary-view')){return;}el=el.parentElement;}e.preventDefault();},{passive:false});
+  renderHome();
+  renderLog();
+  initInstallPrompt();
+})();
+
+// ── INSTALL AS APP (PWA) ────────────────────────────────────────
+let deferredInstallPrompt=null;
+let installTab='android';
+function isStandalone(){return window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;}
+function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);}
+function isIOSSafari(){return isIOS()&&!/CriOS|FxiOS|EdgiOS|OPiOS|OPT\//i.test(navigator.userAgent);}
+function isAndroid(){return /android/i.test(navigator.userAgent);}
+function initInstallPrompt(){
+  if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+  const btn=document.getElementById('install-btn');
+  if(!btn)return;
+  if(isStandalone())return; // already installed, no need to show button
+  installTab=isIOS()?'ios':'android';
+  btn.style.display='inline-flex';
+  window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredInstallPrompt=e;});
+  window.addEventListener('appinstalled',()=>{btn.style.display='none';deferredInstallPrompt=null;closeInstallModal();showToast('HealthLog Pro dipasang ✓');});
+}
+function handleInstallClick(){
+  if(deferredInstallPrompt&&!isIOS()){
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.finally(()=>{deferredInstallPrompt=null;});
+    return;
+  }
+  document.getElementById('install-modal').style.display='flex';
+  renderInstallModal();
+}
+function setInstallTab(t){installTab=t;renderInstallModal();}
+function stepsHtml(steps){return steps.map((t,i)=>`<div class="step-row"><div class="step-num" style="background:var(--green)">${i+1}</div><div class="step-txt">${t}</div></div>`).join('');}
+function renderInstallModal(){
+  document.getElementById('install-tabs').innerHTML=[['android','🤖 Android'],['ios','🍎 iPhone/iPad']].map(([t,l])=>`<button class="edtab-btn ${installTab===t?'sel':''}" onclick="setInstallTab('${t}')">${l}</button>`).join('');
+  const body=document.getElementById('install-modal-body');
+  if(installTab==='android'){
+    let html='';
+    if(deferredInstallPrompt){
+      html+=`<div style="background:var(--okBg);border-radius:12px;padding:12px 14px;margin-bottom:14px"><p style="font-size:var(--fsm);color:var(--okText);font-weight:700;margin-bottom:10px">✅ Peranti anda menyokong pemasangan satu ketik.</p><button class="btn btn-green" style="width:100%" onclick="handleInstallClick()">⬇️ Install Sekarang</button></div><p style="font-size:var(--fxs);color:var(--txt2);font-weight:700;margin-bottom:8px;text-transform:uppercase">Atau ikut langkah manual:</p>`;
+    }
+    html+=stepsHtml([
+      'Buka pautan (link) HealthLog Pro ini dalam pelayar <strong>Google Chrome</strong>.',
+      'Ketik ikon menu <strong>⋮</strong> (tiga titik) di penjuru atas kanan skrin.',
+      'Ketik <strong>"Install app"</strong> atau <strong>"Tambah ke Skrin Utama" (Add to Home screen)</strong>.',
+      'Ketik <strong>"Install"</strong> atau <strong>"Tambah"</strong> untuk sahkan.',
+      'Ikon HealthLog Pro akan muncul pada skrin utama telefon anda — ketik untuk buka seperti aplikasi biasa.'
+    ]);
+    html+=`<div style="background:var(--bg);border-radius:10px;padding:10px 14px;margin-top:6px;font-size:var(--fxs);color:var(--txt2);line-height:1.6">💡 Menggunakan Samsung Internet atau pelayar lain? Cari pilihan <strong>"Tambah ke Skrin Utama"</strong> dalam menu pelayar tersebut — langkahnya serupa.</div>`;
+    body.innerHTML=html;
+  }else{
+    let html='';
+    if(!isIOSSafari()&&isIOS()){
+      html+=`<div style="background:var(--danBg);border-radius:12px;padding:12px 14px;margin-bottom:14px"><p style="font-size:var(--fsm);color:var(--danText);font-weight:700;line-height:1.6">⚠️ Anda perlu buka pautan ini dalam <strong>Safari</strong> — pemasangan tidak boleh dilakukan dari Chrome / pelayar lain pada iPhone.</p></div>`;
+    }
+    html+=stepsHtml([
+      'Buka pautan (link) HealthLog Pro ini dalam <strong>Safari</strong> (bukan Chrome atau aplikasi lain).',
+      'Ketik ikon <strong>Kongsi (Share) 📤</strong> — di bar bawah skrin untuk iPhone, atau bar atas untuk iPad.',
+      'Skrol ke bawah senarai dan ketik <strong>"Add to Home Screen" (Tambah ke Skrin Utama)</strong>.',
+      'Ketik <strong>"Add"</strong> di penjuru kanan atas untuk sahkan.',
+      'Ikon HealthLog Pro akan muncul pada skrin utama telefon anda — ketik untuk buka seperti aplikasi biasa.'
+    ]);
+    body.innerHTML=html;
+  }
+}
+function closeInstallModal(){document.getElementById('install-modal').style.display='none';}
+
+function handleBackButton(){
+  if(detailRecord){detailRecord=null;renderHistory();return;}
+  if(showAdvice){showAdvice=false;renderLog();return;}
+  if(currentTab!=='home'){goTab('home');return;}
+  if(confirm('Keluar dari HealthLog Pro?')){saveNow();if(navigator.app&&navigator.app.exitApp){navigator.app.exitApp();return;}if(window.Android){const fn=window.Android.exitApp||window.Android.closeApp||window.Android.exit||window.Android.finish;if(typeof fn==='function'){fn();return;}}window.close();}
+}
+</script>
+</body>
+</html>
