@@ -380,6 +380,44 @@ function saveNow(){clearTimeout(_saveTimer);_doSave();}
 function _doSave(){try{localStorage.setItem(STORE_KEY,JSON.stringify({r:readings,it:insulinType,nid:nextId,aiHistory:aiHistory}));}catch(e){try{localStorage.setItem(STORE_KEY,JSON.stringify({r:readings.slice(0,300),it:insulinType,nid:nextId}));}catch(e2){}}}
 function loadFromStorage(){try{const raw=localStorage.getItem(STORE_KEY);if(!raw)return;const d=JSON.parse(raw);if(!d||typeof d!=='object')return;if(Array.isArray(d.r))readings=d.r.filter(r=>r&&typeof r.id==='number'&&typeof r.ts==='number'&&r.ts>0&&(r.type==='glucose'||r.type==='bp'));if(typeof d.it==='string'&&['oral','premix','basal-bolus'].includes(d.it))insulinType=d.it;const maxId=readings.reduce((m,r)=>Math.max(m,r.id),0);nextId=Math.max((typeof d.nid==='number'?d.nid:1),maxId+1);if(Array.isArray(d.aiHistory))aiHistory=d.aiHistory.slice(-40);}catch(e){readings=[];nextId=1;}}
 
+// ── DRAFT AUTOSAVE (unsaved entry-form values — survives tab switches, back button, and app close) ──
+const DRAFT_KEY='healthlog_draft_v1';
+function saveDraft(){
+  if(showAdvice)return;
+  const g=document.getElementById('inp-glucose'),s=document.getElementById('inp-sys'),di=document.getElementById('inp-dia'),p=document.getElementById('inp-pulse'),n=document.getElementById('inp-note');
+  const vals={glucose:g?g.value:'',sys:s?s.value:'',dia:di?di.value:'',pulse:p?p.value:'',note:n?n.value:''};
+  const hasVal=vals.glucose||vals.sys||vals.dia||vals.pulse||vals.note;
+  try{
+    if(!hasVal){localStorage.removeItem(DRAFT_KEY);return;}
+    localStorage.setItem(DRAFT_KEY,JSON.stringify({logType,logTiming,...vals}));
+  }catch(e){}
+}
+function loadDraftState(){
+  try{
+    const raw=localStorage.getItem(DRAFT_KEY);
+    if(!raw)return;
+    const d=JSON.parse(raw);
+    if(!d)return;
+    if(typeof d.logType==='string')logType=d.logType;
+    if(typeof d.logTiming==='string')logTiming=d.logTiming;
+  }catch(e){}
+}
+function restoreDraftFields(){
+  try{
+    const raw=localStorage.getItem(DRAFT_KEY);
+    if(!raw)return;
+    const d=JSON.parse(raw);
+    if(!d)return;
+    const g=document.getElementById('inp-glucose'),s=document.getElementById('inp-sys'),di=document.getElementById('inp-dia'),p=document.getElementById('inp-pulse'),n=document.getElementById('inp-note');
+    if(g&&d.glucose)g.value=d.glucose;
+    if(s&&d.sys)s.value=d.sys;
+    if(di&&d.dia)di.value=d.dia;
+    if(p&&d.pulse)p.value=d.pulse;
+    if(n&&d.note)n.value=d.note;
+  }catch(e){}
+}
+function clearDraft(){try{localStorage.removeItem(DRAFT_KEY);}catch(e){}}
+
 const MONTHS_MY=["Jan","Feb","Mac","Apr","Mei","Jun","Jul","Ogo","Sep","Okt","Nov","Dis"];
 const MONTHS_FULL=["Januari","Februari","Mac","April","Mei","Jun","Julai","Ogos","September","Oktober","November","Disember"];
 const HARI=["Isn","Sel","Rab","Kha","Jum","Sab","Ahd"];
@@ -666,6 +704,7 @@ function tabbarHtml(active){
 
 // ── NAVIGATION ────────────────────────────────────────────────
 function goTab(tab){
+  saveDraft();
   if(tab==='history'){detailRecord=null;clearConfirm=false;}
   if(tab==='home'){showAdvice=false;}
   currentTab=tab;
@@ -740,10 +779,12 @@ function renderLog(){
     formHtml=`<div class="card"><div class="grid2" style="margin-bottom:0"><div class="inp-wrap"><div class="inp-lbl"><span>Sistolik</span><span class="inp-unit">mmHg</span></div><input class="inp" type="text" id="inp-sys" inputmode="numeric" placeholder="120" autocomplete="off"><p class="inp-err" id="err-sys">Nilai tidak sah</p></div><div class="inp-wrap"><div class="inp-lbl"><span>Diastolik</span><span class="inp-unit">mmHg</span></div><input class="inp" type="text" id="inp-dia" inputmode="numeric" placeholder="80" autocomplete="off"><p class="inp-err" id="err-dia">Nilai tidak sah</p></div></div><div class="inp-wrap"><div class="inp-lbl"><span>Nadi</span><span class="inp-unit">bpm</span></div><input class="inp" type="text" id="inp-pulse" inputmode="numeric" placeholder="72" autocomplete="off"></div><div style="background:var(--okBg);border-radius:12px;padding:12px 16px;margin-bottom:16px"><span style="font-size:var(--fsm);color:var(--okText);font-weight:800">🎯 Sasaran: </span><span style="font-size:var(--fsm);color:var(--okText);font-weight:600">&lt;130/80 mmHg · Nadi 60–100 bpm</span></div><div class="inp-wrap"><div class="inp-lbl"><span>Nota (pilihan)</span></div><input class="inp" style="font-size:var(--fmd);font-weight:500" type="text" id="inp-note" placeholder="cth: selepas senaman, sakit kepala..." autocomplete="off" autocorrect="off" autocapitalize="sentences"></div><button class="save-btn" onclick="doSave()">Simpan Bacaan</button></div>`;
   }
   body.innerHTML=`<div class="btn-row">${tBtns}</div>${formHtml}`;
-  [['inp-glucose',true],['inp-sys',false],['inp-dia',false],['inp-pulse',false]].forEach(([id,dec])=>{const el=document.getElementById(id);if(!el)return;el.addEventListener('input',function(){let v=this.value.replace(dec?/[^\d.]/g:/[^\d]/g,'');if(dec){const p=v.split('.');if(p.length>2)v=p[0]+'.'+p.slice(1).join('');}if(this.value!==v)this.value=v;});});
+  [['inp-glucose',true],['inp-sys',false],['inp-dia',false],['inp-pulse',false]].forEach(([id,dec])=>{const el=document.getElementById(id);if(!el)return;el.addEventListener('input',function(){let v=this.value.replace(dec?/[^\d.]/g:/[^\d]/g,'');if(dec){const p=v.split('.');if(p.length>2)v=p[0]+'.'+p.slice(1).join('');}if(this.value!==v)this.value=v;saveDraft();});});
+  const noteFld=document.getElementById('inp-note');if(noteFld)noteFld.addEventListener('input',saveDraft);
+  if(!showAdvice)restoreDraftFields();
 }
-function setLogType(t){logType=t;renderLog();}
-function setTiming(t){logTiming=t;renderLog();}
+function setLogType(t){logType=t;renderLog();saveDraft();}
+function setTiming(t){logTiming=t;renderLog();saveDraft();}
 function logAnother(){showAdvice=false;renderLog();}
 function doSave(){
   let valid=true;
@@ -753,7 +794,7 @@ function doSave(){
   if(logType==='glucose'){const el=document.getElementById('inp-glucose');const v=parseFloat(el?el.value:'');if(!el||!el.value||isNaN(v)||v<=0||v>35){showErr('err-glucose',true);valid=false;}else{showErr('err-glucose',false);r.value=Math.round(v*10)/10;r.timing=logTiming;if(v>25)showToast('⚠️ Bacaan sangat tinggi — sahkan keputusan anda',3500);}}
   else{const sEl=document.getElementById('inp-sys'),dEl=document.getElementById('inp-dia'),pEl=document.getElementById('inp-pulse');const sys=parseInt(sEl?sEl.value:''),dia=parseInt(dEl?dEl.value:'');if(!sys||isNaN(sys)||sys<50||sys>280){showErr('err-sys',true);valid=false;}else showErr('err-sys',false);if(!dia||isNaN(dia)||dia<30||dia>180){showErr('err-dia',true);valid=false;}else showErr('err-dia',false);if(!valid)return;if(sys<=dia){showToast('⚠️ Sistolik mestilah lebih tinggi daripada diastolik');return;}r.sys=sys;r.dia=dia;r.pulse=parseInt(pEl?pEl.value:'')||0;}
   if(!valid)return;
-  readings.unshift(r);saveToStorage();lastAdvice=buildAdvice(r);showAdvice=true;renderLog();
+  readings.unshift(r);saveToStorage();clearDraft();lastAdvice=buildAdvice(r);showAdvice=true;renderLog();
 }
 
 // ── HISTORY ────────────────────────────────────────────────────
@@ -943,13 +984,18 @@ function renderExchangeDiet(){
 }
 function toggleExGroup(i){const el=document.getElementById('exg-'+i);if(!el)return;el.style.display=el.style.display==='none'?'block':'none';}
 
+// ── INSTALL AS APP (PWA) — state declared here so init() below can use it ──
+let deferredInstallPrompt=null;
+let installTab='android';
+
 // ── INIT ──────────────────────────────────────────────────────
 (function init(){
   loadFromStorage();
+  loadDraftState();
   document.querySelectorAll('[id^="tabbar-"]').forEach(el=>{el.innerHTML=tabbarHtml('home');});
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveNow();});
-  window.addEventListener('pagehide',saveNow);
-  window.addEventListener('beforeunload',saveNow);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){saveNow();saveDraft();}});
+  window.addEventListener('pagehide',()=>{saveNow();saveDraft();});
+  window.addEventListener('beforeunload',()=>{saveNow();saveDraft();});
   document.addEventListener('deviceready',function(){document.addEventListener('backbutton',handleBackButton,false);},false);
   history.pushState({app:true},'');
   window.addEventListener('popstate',function(){handleBackButton();history.pushState({app:true},'');});
@@ -960,9 +1006,6 @@ function toggleExGroup(i){const el=document.getElementById('exg-'+i);if(!el)retu
   initInstallPrompt();
 })();
 
-// ── INSTALL AS APP (PWA) ────────────────────────────────────────
-let deferredInstallPrompt=null;
-let installTab='android';
 function isStandalone(){return window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;}
 function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);}
 function isIOSSafari(){return isIOS()&&!/CriOS|FxiOS|EdgiOS|OPiOS|OPT\//i.test(navigator.userAgent);}
@@ -1058,6 +1101,7 @@ function renderInstallModal(){
 function closeInstallModal(){document.getElementById('install-modal').style.display='none';}
 
 function handleBackButton(){
+  saveDraft();
   if(detailRecord){detailRecord=null;renderHistory();return;}
   if(showAdvice){showAdvice=false;renderLog();return;}
   if(currentTab!=='home'){goTab('home');return;}
