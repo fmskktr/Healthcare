@@ -418,6 +418,20 @@ function restoreDraftFields(){
 }
 function clearDraft(){try{localStorage.removeItem(DRAFT_KEY);}catch(e){}}
 
+// Ask the browser to mark this site's storage as "persistent" — meaning it
+// won't be silently auto-evicted when the device is low on space. Browsers
+// generally grant this automatically for installed PWAs. Safe no-op on
+// browsers/devices that don't support the API.
+function requestPersistentStorage(){
+  try{
+    if(navigator.storage&&navigator.storage.persist){
+      navigator.storage.persisted().then(already=>{
+        if(!already)navigator.storage.persist().catch(()=>{});
+      }).catch(()=>{});
+    }
+  }catch(e){}
+}
+
 const MONTHS_MY=["Jan","Feb","Mac","Apr","Mei","Jun","Jul","Ogo","Sep","Okt","Nov","Dis"];
 const MONTHS_FULL=["Januari","Februari","Mac","April","Mei","Jun","Julai","Ogos","September","Oktober","November","Disember"];
 const HARI=["Isn","Sel","Rab","Kha","Jum","Sab","Ahd"];
@@ -992,6 +1006,7 @@ let installTab='android';
 (function init(){
   loadFromStorage();
   loadDraftState();
+  requestPersistentStorage();
   document.querySelectorAll('[id^="tabbar-"]').forEach(el=>{el.innerHTML=tabbarHtml('home');});
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){saveNow();saveDraft();}});
   window.addEventListener('pagehide',()=>{saveNow();saveDraft();});
