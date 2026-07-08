@@ -351,6 +351,13 @@ button,a{-webkit-touch-callout:none;}
   <div class="tabbar" id="tabbar-ai"></div>
 </div>
 
+<!-- INSTALL BANNER (auto-appears, tap to trigger real install prompt) -->
+<div id="install-banner" style="display:none;position:fixed;left:12px;right:12px;bottom:calc(12px + var(--safe-bottom,0px));background:var(--dgreen);border-radius:14px;padding:12px 14px;box-shadow:0 6px 20px rgba(0,0,0,.35);z-index:997;align-items:center;gap:10px;">
+  <div style="flex:1;font-size:var(--fsm);font-weight:700;color:#fff;line-height:1.4">📲 Pasang HealthLog Pro sebagai aplikasi di telefon anda</div>
+  <button class="btn btn-green" style="padding:8px 14px;white-space:nowrap" onclick="handleInstallClick()">Pasang</button>
+  <button class="btn-ghost" style="padding:4px 8px;color:#fff" onclick="dismissInstallBanner()">✕</button>
+</div>
+
 <!-- INSTALL APP MODAL (full instructions for Android & iOS) -->
 <div id="install-modal" style="display:none;position:fixed;inset:0;background:rgba(13,17,23,.6);z-index:998;align-items:center;justify-content:center;padding:20px;">
   <div class="card" style="max-width:380px;width:100%;margin:0;box-shadow:0 8px 30px rgba(0,0,0,.35);max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
@@ -963,68 +970,56 @@ function isAndroid(){return /android/i.test(navigator.userAgent);}
 function initInstallPrompt(){
   if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
   const btn=document.getElementById('install-btn');
-  if(!btn)return;
-  if(isStandalone())return; // already installed, no need to show button
+  if(isStandalone())return; // already installed, nothing to show
   installTab=isIOS()?'ios':'android';
-  btn.style.display='inline-flex';
- window.addEventListener('beforeinstallprompt',(e)=>{
+  if(btn)btn.style.display='inline-flex';
 
+  // Android/Chrome: capture the real install event, then show our banner.
+  // We NEVER call .prompt() automatically — browsers silently ignore it unless
+  // it's called directly inside a user tap, so the banner's button is what
+  // actually triggers it.
+  window.addEventListener('beforeinstallprompt',(e)=>{
     e.preventDefault();
-
     deferredInstallPrompt=e;
+    showInstallBanner();
+  });
+  window.addEventListener('appinstalled',()=>{
+    if(btn)btn.style.display='none';
+    deferredInstallPrompt=null;
+    closeInstallModal();
+    hideInstallBanner();
+    showToast('HealthLog Pro dipasang ✓');
+  });
 
-    // Auto show native Chrome install dialog
-    setTimeout(()=>{
-
-        if(!isStandalone() && deferredInstallPrompt){
-
-            handleInstallClick();
-
-        }
-
-    },1000);
-
-});
-  window.addEventListener('appinstalled',()=>{btn.style.display='none';deferredInstallPrompt=null;closeInstallModal();showToast('HealthLog Pro dipasang ✓');});
-// Auto show iPhone install guide
-
-if(
-    isIOS() &&
-    !isStandalone() &&
-    !localStorage.getItem("iosInstallShown")
-){
-
-    setTimeout(()=>{
-
-        document.getElementById("install-modal").style.display="flex";
-
-        renderInstallModal();
-
-        localStorage.setItem("iosInstallShown","1");
-
-    },1500);
-
-}}
+  // iOS has no beforeinstallprompt event at all, so show the banner ourselves
+  // after a short delay. Tapping it opens the step-by-step Safari instructions.
+  if(isIOS() && !localStorage.getItem('installBannerDismissed')){
+    setTimeout(showInstallBanner,1500);
+  }
+}
+function showInstallBanner(){
+  if(isStandalone())return;
+  if(localStorage.getItem('installBannerDismissed'))return;
+  const b=document.getElementById('install-banner');
+  if(b)b.style.display='flex';
+}
+function hideInstallBanner(){
+  const b=document.getElementById('install-banner');
+  if(b)b.style.display='none';
+}
+function dismissInstallBanner(){
+  localStorage.setItem('installBannerDismissed','1');
+  hideInstallBanner();
+}
 function handleInstallClick(){
-
-    if(deferredInstallPrompt && !isIOS()){
-
-        deferredInstallPrompt.prompt();
-
-        deferredInstallPrompt.userChoice.then(()=>{
-
-            deferredInstallPrompt=null;
-
-        });
-
-        return;
-
-    }
-
-    document.getElementById("install-modal").style.display="flex";
-
-    renderInstallModal();
-
+  hideInstallBanner();
+  if(deferredInstallPrompt && !isIOS()){
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.finally(()=>{deferredInstallPrompt=null;});
+    return;
+  }
+  document.getElementById('install-modal').style.display='flex';
+  renderInstallModal();
 }
 function setInstallTab(t){installTab=t;renderInstallModal();}
 function stepsHtml(steps){return steps.map((t,i)=>`<div class="step-row"><div class="step-num" style="background:var(--green)">${i+1}</div><div class="step-txt">${t}</div></div>`).join('');}
